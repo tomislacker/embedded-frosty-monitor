@@ -53,3 +53,13 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# PlatformIO
+.pio/
+
+# Python
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+.ipynb_checkpoints/
