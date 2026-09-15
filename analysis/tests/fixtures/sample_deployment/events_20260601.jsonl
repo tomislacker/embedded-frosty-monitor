@@ -1,0 +1,5 @@
+{"ts_iso": "2026-06-01T00:00:00Z", "ts_unix_ms": 1780272000000, "type": "system", "detail": {"msg": "boot", "firmware_version": "0.1.0-fixture"}}
+{"ts_iso": "2026-06-01T00:00:05Z", "ts_unix_ms": 1780272005000, "type": "system", "detail": {"msg": "config loaded"}}
+{"ts_iso": "2026-06-01T00:02:00Z", "ts_unix_ms": 1780272120000, "type": "button", "detail": {"button": "event_journal", "note": "tech observed rattling"}}
+{"ts_iso": "2026-06-01T00:03:00Z", "ts_unix_ms": 1780272180000, "type": "trigger", "detail": {"reason": "current_spike", "channel": "current_compressor_a"}}
+{"ts_iso": "2026-06-01T00:09:00Z", "ts_unix_ms": 1780272540000, "type": "system", "detail": {"msg": "channels_20260602.csv rotation pending"}}
