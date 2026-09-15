@@ -1,0 +1,4 @@
+# PlatformIO build/tooling output
+.pio/
+.pioenvs/
+.piolibdeps/
