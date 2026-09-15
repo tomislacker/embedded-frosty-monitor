@@ -1,0 +1,18 @@
+gpio,function,bus,direction,notes
+1,LED 1: recording,—,output,sink to ground via ~1kΩ current-limit resistor; active-high
+2,LED 2: error,—,output,sink to ground via ~1kΩ resistor; active-high
+4,1-Wire DS18B20 chain,1-Wire,bidirectional,external 4.7kΩ pull-up to 3.3V; all four probes share this line
+5,LED 3: card status,—,output,sink to ground via ~1kΩ resistor; active-high
+6,Button 1: event-journal,—,input,internal pull-up enabled; active-low (push grounds pin)
+7,Button 2: spare/mode,—,input,internal pull-up enabled; active-low
+8,I2C SDA,I2C,open-drain,shared bus: ADS1115 0x48 + DS3231 0x68 + ADXL345_A 0x1D + ADXL345_B 0x53; pod buffering via P82B715 if cable >1m
+9,I2C SCL,I2C,open-drain,same bus as GPIO8; four-device pull-up stack risk—see wiring-and-pinmap.md pull-up note
+10,SPI CS: microSD,SPI,output,active-low chip select; shared bus with MAX31855
+11,SPI MOSI,SPI,output,shared bus: microSD + MAX31855 (MAX31855 is read-only on MISO)
+12,SPI SCK,SPI,output,10-20 MHz clock; all SPI slaves listen
+13,SPI MISO,SPI,input,input from microSD + MAX31855
+14,SPI CS: MAX31855,SPI,output,active-low chip select; thermocouple data read-only
+15,AC-presence 1: 120V beater leg,digital,input,opto module TTL output; pulls to 3.3V when AC live
+16,AC-presence 2: 24V contactor coil,digital,input,opto module TTL output; bench-verify threshold before deployment (see bom.md risks)
+17,AC-presence 3: TCC microswitch node,digital,input,optional; opto module TTL output; pulls to 3.3V when energized
+18,AC-presence 4: HP switch node,digital,input,optional; opto module TTL output; pulls to 3.3V when energized
