@@ -128,3 +128,19 @@ Milestones:
   thresholds generalize across the other two chassis sizes.
 
 See [`docs/roadmap.md`](docs/roadmap.md) for what comes after M5.
+
+## License
+
+Licensed under the Apache License, Version 2.0 — see [`LICENSE`](LICENSE).
+Copyright 2026 Ben Tomasik (tomislacker).
+
+You may use, reproduce, modify, and distribute this work, including
+commercially, provided you retain the copyright notice, the license text, and
+the [`NOTICE`](NOTICE) file in any redistribution, and state any changes you
+made. The license covers everything in this repo: firmware, the analysis
+package, hardware BOM and pinmap, and the doc set.
+
+The license's "AS IS" disclaimer applies to the hardware designs and install
+procedures as much as to the code. This device is installed inside machines
+carrying line-voltage AC and refrigerant under pressure — read
+[`docs/safety.md`](docs/safety.md) and take responsibility for your own build.
