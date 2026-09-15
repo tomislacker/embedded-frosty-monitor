@@ -10,6 +10,8 @@
 #include "app_context.h"
 #include "pins.h"
 #include "version.h"
+#include "storage/ble_sink.h"
+#include "storage/cloud_sink.h"
 #include "storage/sd_sink.h"
 #include "tasks/config_loader.h"
 #include "tasks/sampling_scheduler.h"
@@ -31,6 +33,15 @@ LeakSensorsHal g_leakSensors;
 VibrationAdxl345 g_vibPodBeater(1, i2c_addr::ADXL345_POD_A);
 VibrationAdxl345 g_vibPodCompressor(2, i2c_addr::ADXL345_POD_B);
 ConfigLoader g_configLoader(&g_sink);
+
+// CloudSink needs the effective config (in particular config.cloud), which
+// only exists after ConfigLoader::loadOrDefault() runs -- so, unlike every
+// other global above, it can't be constructed with its final config at
+// static-init time. It's constructed in setup() instead once the config is
+// available; see the comment there. BleSink has no config to wait for
+// (it's a stub either way), so it stays a plain global like the HAL stubs.
+CloudSink* g_cloudSink = nullptr;
+BleSink g_bleSink;
 
 AppContext g_ctx;
 
@@ -72,12 +83,24 @@ void setup() {
     g_configLoader.loadOrDefault();
     g_configLoader.writeManifest(g_rtc);
 
+    // CloudSink is constructed here, after loadOrDefault(), so it gets the
+    // effective config.cloud (technician-authored config.json value if
+    // present, CloudConfig{} defaults -- i.e. disabled -- otherwise). A
+    // plain `new` with no matching delete is intentional and matches every
+    // other global here: this object lives for the process's entire life.
+    g_cloudSink = new CloudSink(g_configLoader.config().cloud);
+    g_cloudSink->begin(); // no-op (no WiFi touched) unless config.cloud.enabled
+
     g_ctx.sampleQueue = xQueueCreate(kSampleQueueDepth, sizeof(SampleRecord));
     if (g_ctx.sampleQueue == nullptr) {
         Serial.println("[main] FATAL: failed to create sample queue");
     }
 
     g_ctx.sink = &g_sink;
+    g_ctx.sinks[0] = &g_sink;       // primary / source of truth, always first
+    g_ctx.sinks[1] = g_cloudSink;   // best-effort, disabled by default
+    g_ctx.sinks[2] = &g_bleSink;    // stub -- isReady() always false, see ble_sink.h
+    g_ctx.sinkCount = 3;
     g_ctx.rtc = &g_rtc;
     g_ctx.currentSensor = &g_currentSensor;
     g_ctx.tempDs18b20 = &g_tempDs18b20;

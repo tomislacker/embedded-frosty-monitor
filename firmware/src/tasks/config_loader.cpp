@@ -49,6 +49,30 @@ void ConfigLoader::loadOrDefault() {
     config_.vib_sample_rate_hz = doc["vib_sample_rate_hz"] | config_.vib_sample_rate_hz;
     config_.current_spike_threshold_a = doc["current_spike_threshold_a"] | config_.current_spike_threshold_a;
 
+    // "cloud" object is entirely optional; every field defaults per
+    // CloudConfig (cloud_config.h) when the object -- or any individual
+    // field within it -- is absent. In particular cloud.enabled defaults to
+    // false, so an old config.json with no "cloud" key at all is exactly
+    // equivalent to an explicit {"cloud":{"enabled":false}}.
+    JsonObjectConst cloud = doc["cloud"];
+    config_.cloud.enabled = cloud["enabled"] | config_.cloud.enabled;
+    config_.cloud.wifi_ssid = cloud["wifi_ssid"] | config_.cloud.wifi_ssid.c_str();
+    config_.cloud.wifi_pass = cloud["wifi_pass"] | config_.cloud.wifi_pass.c_str();
+    config_.cloud.mqtt_host = cloud["mqtt_host"] | config_.cloud.mqtt_host.c_str();
+    config_.cloud.mqtt_port = cloud["mqtt_port"] | config_.cloud.mqtt_port;
+    config_.cloud.client_id = cloud["client_id"] | config_.cloud.client_id.c_str();
+    config_.cloud.topic_prefix = cloud["topic_prefix"] | config_.cloud.topic_prefix.c_str();
+    config_.cloud.publish_interval_s = cloud["publish_interval_s"] | config_.cloud.publish_interval_s;
+    config_.cloud.ca_path = cloud["ca_path"] | config_.cloud.ca_path.c_str();
+    config_.cloud.cert_path = cloud["cert_path"] | config_.cloud.cert_path.c_str();
+    config_.cloud.key_path = cloud["key_path"] | config_.cloud.key_path.c_str();
+    // A technician shouldn't have to name the deployment twice; fall back to
+    // deployment_id if config.json's "cloud" object didn't set its own
+    // client_id (or omitted "cloud" entirely).
+    if (config_.cloud.client_id.empty()) {
+        config_.cloud.client_id = config_.deployment_id;
+    }
+
     Serial.println("[config_loader] loaded /config.json");
 }
 

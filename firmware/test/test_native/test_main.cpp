@@ -6,6 +6,7 @@
 
 #include "hal/digital_input.h"
 #include "hal/leak_sensors.h"
+#include "storage/cloud_aggregate.h"
 #include "storage/record_format.h"
 #include "storage/record_types.h"
 #include "util/ring_buffer.h"
@@ -289,6 +290,123 @@ void test_drip_rate_millis_rollover_safe() {
     TEST_ASSERT_EQUAL_UINT16(2, mon.dropCountInWindow(justBeforeRollover + 5));
 }
 
+// ---- cloud_aggregate: ChannelAggregator ----
+
+void test_cloud_channel_agg_mean_min_max() {
+    cloud_aggregate::ChannelAggregator agg;
+
+    ChannelRow r1;
+    r1.ts_unix_ms = 1000;
+    r1.current_beater_a = 1.0f;
+    agg.add(r1);
+
+    ChannelRow r2;
+    r2.ts_unix_ms = 2000;
+    r2.current_beater_a = 3.0f;
+    agg.add(r2);
+
+    TEST_ASSERT_EQUAL_UINT32(2, agg.count());
+    const std::string json = agg.toJson(60);
+    TEST_ASSERT_NOT_EQUAL(std::string::npos,
+        json.find("\"current_beater_a\":{\"mean\":2.000,\"min\":1.000,\"max\":3.000}"));
+    // Window-end timestamp, not window-start.
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"ts_unix_ms\":2000"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"window_s\":60"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"n\":2"));
+}
+
+void test_cloud_channel_agg_nan_channel_excluded() {
+    cloud_aggregate::ChannelAggregator agg;
+
+    ChannelRow r1;
+    r1.ts_unix_ms = 1000;
+    r1.temp_hopper_c = NAN; // unpopulated probe, every row
+    r1.temp_cylinder_c = 5.0f;
+    agg.add(r1);
+
+    ChannelRow r2;
+    r2.ts_unix_ms = 2000;
+    r2.temp_hopper_c = NAN;
+    r2.temp_cylinder_c = 6.0f;
+    agg.add(r2);
+
+    const std::string json = agg.toJson(60);
+    TEST_ASSERT_EQUAL(std::string::npos, json.find("\"temp_hopper_c\""));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos,
+        json.find("\"temp_cylinder_c\":{\"mean\":5.500,\"min\":5.000,\"max\":6.000}"));
+}
+
+void test_cloud_channel_agg_bool_last_value_wins() {
+    cloud_aggregate::ChannelAggregator agg;
+
+    ChannelRow r1;
+    r1.ts_unix_ms = 1000;
+    r1.beater_on = false;
+    r1.hp_ok = true;
+    agg.add(r1);
+
+    ChannelRow r2;
+    r2.ts_unix_ms = 2000;
+    r2.beater_on = true;
+    r2.hp_ok = false;
+    agg.add(r2);
+
+    const std::string json = agg.toJson(60);
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"beater_on\":true"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"hp_ok\":false"));
+}
+
+void test_cloud_channel_agg_reset_clears_accumulator() {
+    cloud_aggregate::ChannelAggregator agg;
+
+    ChannelRow r1;
+    r1.ts_unix_ms = 1000;
+    r1.current_beater_a = 9.0f;
+    r1.beater_on = true;
+    agg.add(r1);
+    TEST_ASSERT_EQUAL_UINT32(1, agg.count());
+
+    agg.reset();
+    TEST_ASSERT_EQUAL_UINT32(0, agg.count());
+
+    const std::string json = agg.toJson(60);
+    // No samples since reset -> every numeric channel excluded (NaN-only
+    // window, same as never having data at all).
+    TEST_ASSERT_EQUAL(std::string::npos, json.find("\"current_beater_a\""));
+    // Bools reset to their default (false), not stuck at the pre-reset value.
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"beater_on\":false"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"n\":0"));
+}
+
+// ---- cloud_aggregate: VibAggregator ----
+
+void test_cloud_vib_agg_mean_min_max_and_pod_id() {
+    cloud_aggregate::VibAggregator agg;
+
+    VibSummary v1;
+    v1.ts_unix_ms = 1000;
+    v1.pod_id = 2;
+    v1.rms_x_g = 0.10f;
+    agg.add(v1);
+
+    VibSummary v2;
+    v2.ts_unix_ms = 6000;
+    v2.pod_id = 2;
+    v2.rms_x_g = 0.30f;
+    agg.add(v2);
+
+    TEST_ASSERT_EQUAL_UINT32(2, agg.count());
+    const std::string json = agg.toJson(300);
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, json.find("\"pod_id\":2"));
+    TEST_ASSERT_NOT_EQUAL(std::string::npos,
+        json.find("\"rms_x_g\":{\"mean\":0.200,\"min\":0.100,\"max\":0.300}"));
+    // JSON must be well-formed (no dangling trailing comma before the
+    // closing brace) regardless of which numeric field is emitted last.
+    TEST_ASSERT_TRUE(json.size() > 1);
+    TEST_ASSERT_EQUAL_INT('}', json[json.size() - 1]);
+    TEST_ASSERT_NOT_EQUAL(',', json[json.size() - 2]);
+}
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
@@ -318,6 +436,12 @@ int main(int argc, char** argv) {
     RUN_TEST(test_drip_rate_drops_age_out_of_window);
     RUN_TEST(test_drip_rate_partial_aging_keeps_only_recent_drops);
     RUN_TEST(test_drip_rate_millis_rollover_safe);
+
+    RUN_TEST(test_cloud_channel_agg_mean_min_max);
+    RUN_TEST(test_cloud_channel_agg_nan_channel_excluded);
+    RUN_TEST(test_cloud_channel_agg_bool_last_value_wins);
+    RUN_TEST(test_cloud_channel_agg_reset_clears_accumulator);
+    RUN_TEST(test_cloud_vib_agg_mean_min_max_and_pod_id);
 
     return UNITY_END();
 }

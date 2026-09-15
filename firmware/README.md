@@ -142,12 +142,46 @@ All of the above rotates daily by filename (`_YYYYMMDD` suffix); rotation
 is handled transparently inside `SdStorageSink` -- `storage_writer` just
 calls `sink->write()`/`sink->flush()` and doesn't know about file rotation.
 
+## Cloud connectivity (premium tier, disabled by default)
+
+`StorageWriterTask` tees every record to a small array of sinks, not just
+SD: `storage/cloud_sink.{h,cpp}` implements `IStorageSink` and best-effort
+mirrors aggregated channel/vibration data plus events to an MQTT broker over
+TLS. It's **disabled by default** -- with no `"cloud"` object in
+`config.json` (or `"cloud":{"enabled":false}`), it touches no WiFi hardware
+at all and costs nothing. `storage/ble_sink.h` is a header-only stub for the
+lower-tier BLE walk-up offload design (documented, not implemented).
+
+To enable on the bench: drop `ca.pem`/`device.pem`/`device.key` at
+`/certs/` on the SD card (see `cloud/README.md`'s provisioning script for
+generating a dev set), and add a `"cloud"` object to `/config.json`, e.g.:
+
+```json
+{
+  "cloud": {
+    "enabled": true,
+    "wifi_ssid": "bench-wifi",
+    "wifi_pass": "...",
+    "mqtt_host": "test.mosquitto.example",
+    "client_id": "bench-unit-01"
+  }
+}
+```
+
+See [docs/firmware/connectivity.md](../docs/firmware/connectivity.md) for
+the full design: the multi-sink tee, `CloudSink`'s connection state machine,
+publish topics/JSON schemas, TLS cert provisioning, the watermark/backfill
+plan (M2), and the BLE roadmap.
+
 ## Architecture notes
 
-- **Single writer to SD.** Only `tasks/storage_writer` calls
+- **Single writer, multiple sinks.** Only `tasks/storage_writer` calls
   `IStorageSink::write()`/`flush()`; every other task only ever pushes a
   `SampleRecord` onto the shared FreeRTOS queue (`AppContext::sampleQueue`).
-  This means SD access never needs cross-task locking beyond the SPI-bus
+  It tees each record to every sink in `AppContext::sinks` (SD, then Cloud,
+  then BLE -- see [Cloud connectivity](#cloud-connectivity-premium-tier-disabled-by-default)
+  above), but SD is still the only one doing real card I/O in the MVP/M0/M1
+  sense, so SD access never needs cross-task locking beyond the SPI-bus
   mutex (`sdSpiMutex()`), which exists purely to keep SD and MAX31855
   electrically off each other's toes on the shared SPI bus (`pins.h`).
 - **Cardless operation.** `SdStorageSink::begin()`/`isReady()` return
@@ -165,7 +199,9 @@ calls `sink->write()`/`sink->flush()` and doesn't know about file rotation.
   queue in `vibration_capture.cpp`, or a cardless `write()` in
   `sd_sink.cpp`) is responsible for `free()`-ing it. See the comment on
   `VibBurst` in `storage/record_types.h` for the authoritative statement of
-  this contract.
+  this contract. `CloudSink`/`BleSink` never publish raw bursts and never
+  touch `VibBurst::data` at all -- SD remains the sole owner/freer even
+  though every sink now sees the same record.
 - **AppContext.** `src/app_context.h` bundles every HAL stub pointer, the
   sample queue, and the config loader into one struct so task functions
   take a single `AppContext*` as their FreeRTOS task parameter instead of a

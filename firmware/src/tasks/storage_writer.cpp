@@ -18,14 +18,26 @@ void taskFn(void* pv) {
     for (;;) {
         if (ctx->sampleQueue != nullptr &&
             xQueueReceive(ctx->sampleQueue, &rec, pdMS_TO_TICKS(200)) == pdTRUE) {
-            if (ctx->sink != nullptr) {
-                ctx->sink->write(rec);
+            // Tee to every configured sink (sinks[0] is always SD, the
+            // source of truth). Each sink's write() is independent -- one
+            // sink failing (cloud down, a future BLE sink not connected,
+            // whatever) must never block or corrupt any other sink's write,
+            // so failures are swallowed per-sink here rather than
+            // short-circuiting the loop. See
+            // docs/firmware/connectivity.md for the multi-sink design.
+            for (size_t i = 0; i < ctx->sinkCount; ++i) {
+                IStorageSink* s = ctx->sinks[i];
+                if (s != nullptr) {
+                    s->write(rec);
+                }
             }
         }
 
         if ((xTaskGetTickCount() - lastFlush) >= pdMS_TO_TICKS(kFlushPeriodMs)) {
-            if (ctx->sink != nullptr) {
-                ctx->sink->flush();
+            for (size_t i = 0; i < ctx->sinkCount; ++i) {
+                if (ctx->sinks[i] != nullptr) {
+                    ctx->sinks[i]->flush();
+                }
             }
             lastFlush = xTaskGetTickCount();
         }

@@ -21,7 +21,25 @@
 struct AppContext {
     QueueHandle_t sampleQueue = nullptr;
 
+    // `sink` is specifically the primary SD sink -- kept as its own field
+    // (rather than just sinks[0]) because a couple of call sites care about
+    // *SD* readiness specifically, not "is anything ready": ui_task's card
+    // LED, and config_loader's config.json/manifest.json access (which goes
+    // straight through SD.h, not through the sink interface, but still
+    // gates on this same pointer's isReady()).
     IStorageSink* sink = nullptr;
+
+    // Every sink StorageWriterTask tees each record to -- see
+    // tasks/storage_writer.cpp and docs/firmware/connectivity.md for the
+    // multi-sink tee architecture. Index 0 is always `sink` above (SD, the
+    // source of truth); any other slot is best-effort (CloudSink today,
+    // BleSink once implemented) and a failure there must never block or
+    // corrupt SD's write. Fixed-size array, not a vector, to avoid a heap
+    // allocation for something with a small, compile-time-known upper bound.
+    static constexpr size_t kMaxStorageSinks = 3; // SD + Cloud + (future) BLE
+    IStorageSink* sinks[kMaxStorageSinks] = {nullptr, nullptr, nullptr};
+    size_t sinkCount = 0;
+
     RtcDs3231* rtc = nullptr;
     CurrentSensorAds1115* currentSensor = nullptr;
     TempDs18b20* tempDs18b20 = nullptr;

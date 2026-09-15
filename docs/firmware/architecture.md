@@ -10,7 +10,9 @@ see [ADR 0003](../adr/0003-esp32-s3-devkitc-1-platform.md) (ESP32-S3) and
 record shapes referenced throughout, see
 [data-format-spec.md](data-format-spec.md). For the pin-level wiring, the
 single source of truth is `firmware/src/pins.h`, mirrored in
-[docs/hardware/wiring-and-pinmap.md](../hardware/wiring-and-pinmap.md).
+[docs/hardware/wiring-and-pinmap.md](../hardware/wiring-and-pinmap.md). For
+the multi-sink tee, `CloudSink`, and the BLE roadmap, see
+[connectivity.md](connectivity.md).
 
 ## Platform
 
@@ -89,17 +91,23 @@ task:
 
 - Formats each record according to [data-format-spec.md](data-format-spec.md)
   (exact CSV headers, JSONL shape, binary vibration format).
-- Writes through the `IStorageSink` interface. The MVP ships exactly one
-  implementation, `SdSink`; see [Storage abstraction](#storage-abstraction-istoragesink)
-  below.
+- Tees every record through `AppContext::sinks`, a small fixed-size array of
+  `IStorageSink*` — SD (`sinks[0]`) is always primary/first and is the
+  source of truth; `CloudSink` and `BleSink` follow it as best-effort
+  sinks. One sink failing (cloud down, BLE unimplemented) never blocks or
+  corrupts another's write. See
+  [connectivity.md](connectivity.md#multi-sink-tee-architecture) for the
+  full multi-sink design, `CloudSink`'s state machine and publish policy,
+  and the (documented, not implemented) BLE plan.
 - Rotates output files daily (new `channels_YYYYMMDD.csv`,
   `events_YYYYMMDD.jsonl`, `vib_summary_YYYYMMDD.csv` at each UTC day
-  boundary).
-- Flushes/fsyncs on a tunable cadence — roughly every 5 seconds or every N
-  records, whichever comes first. This cadence is the direct knob on
-  power-loss exposure: the unflushed window is the maximum data a sudden
-  power loss can cost. See [Power-loss resilience](#power-loss-resilience)
-  below.
+  boundary) — an SD-sink-specific concern, invisible to the tee loop above.
+- Flushes/fsyncs each sink on a tunable cadence — roughly every 5 seconds or
+  every N records, whichever comes first. For SD this cadence is the direct
+  knob on power-loss exposure: the unflushed window is the maximum data a
+  sudden power loss can cost. See [Power-loss resilience](#power-loss-resilience)
+  below. (`CloudSink::flush()` is a no-op by design — its publish cadence is
+  a separate, coarser knob; see connectivity.md.)
 
 Being the sole owner of SD/SPI access is deliberate, not incidental — see the
 [SPI bus sharing](#spi-bus-sharing-sd-and-max31855) constraint below.
@@ -233,12 +241,16 @@ public:
 };
 ```
 
-`SdSink` is the only implementation in the MVP. The interface exists so that
-a future BLE or WiFi transport is a **new sink implementation**, not a
-rewrite of any sampling or scheduling code — no task upstream of
-`StorageWriterTask` knows or cares which sink is active. See
-[ADR 0002](../adr/0002-microsd-storage-with-transport-abstraction.md) and
-[data-flow.md](../architecture/data-flow.md#where-ble-and-cloud-offload-fit).
+`SdSink` was the only implementation in the MVP; `CloudSink` (real, disabled
+by default) and `BleSink` (stub) now also implement it, teed together by
+`StorageWriterTask` rather than swapped in place of `SdSink` — see
+[Multi-sink tee architecture](connectivity.md#multi-sink-tee-architecture).
+The interface existing at all is what let that land as a **new sink
+implementation** each, not a rewrite of any sampling or scheduling code — no
+task upstream of `StorageWriterTask` knows or cares which sinks are active.
+See [ADR 0002](../adr/0002-microsd-storage-with-transport-abstraction.md),
+[data-flow.md](../architecture/data-flow.md#where-ble-and-cloud-offload-fit),
+and [connectivity.md](connectivity.md) for the full connectivity design.
 
 ## Storage budget
 

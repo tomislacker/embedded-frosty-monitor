@@ -9,6 +9,7 @@
 
 #include "../hal/i_storage_sink.h"
 #include "../hal/rtc_ds3231.h"
+#include "../storage/cloud_config.h"
 
 struct AppConfig {
     std::string deployment_id = "unassigned";
@@ -26,6 +27,11 @@ struct AppConfig {
     // Sampling scheduler current-spike threshold (amps above the stub's
     // steady-state wander) that triggers an out-of-cycle vibration burst.
     float current_spike_threshold_a = 5.0f;
+
+    // Premium-tier real-time remote monitoring. Disabled unless config.json
+    // has a "cloud" object with "enabled":true -- see cloud_config.h and
+    // docs/firmware/connectivity.md.
+    CloudConfig cloud;
 };
 
 class ConfigLoader {
