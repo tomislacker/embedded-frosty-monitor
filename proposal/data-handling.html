@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FrostSight — Data Handling Summary</title>
+<style>
+  :root {
+    --accent: #1a4d6d;
+    --accent-light: #e8eef2;
+    --text: #1c1c1c;
+    --muted: #5a6570;
+    --border: #d4dbe1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.48;
+    font-size: 12.5px;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 1.1rem 1.5rem;
+  }
+  header.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 0.45rem;
+    margin-bottom: 0.8rem;
+  }
+  header.doc-header h1 {
+    color: var(--accent);
+    margin: 0;
+    font-size: 1.7rem;
+  }
+  header.doc-header .tagline {
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: right;
+  }
+  .draft-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.05rem 0.35rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 1.05rem;
+    margin: 0.75rem 0 0.3rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.18rem;
+    page-break-after: avoid;
+  }
+  p { margin: 0.3rem 0; }
+  ul { margin: 0.25rem 0; padding-left: 1.15rem; }
+  li { margin: 0.15rem 0; }
+  section { page-break-inside: avoid; }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+  }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.7rem;
+    page-break-inside: avoid;
+  }
+  .card.yes { border-left: 4px solid var(--accent); }
+  .card.no { border-left: 4px solid var(--muted); }
+  .card h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.92rem;
+    color: var(--accent);
+  }
+  .card.no h3 { color: var(--muted); }
+  .card ul { margin: 0; padding-left: 1.05rem; font-size: 0.87rem; }
+  .callout {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    padding: 0.45rem 0.7rem;
+    margin: 0.4rem 0;
+    font-size: 0.88rem;
+  }
+  footer.doc-footer {
+    margin-top: 0.7rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  @page { size: letter; margin: 0.75in; }
+  @media print {
+    body { padding: 0; max-width: none; }
+    .card, th, .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section, .card { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <h1>FrostSight<span class="draft-tag">DRAFT</span></h1>
+  <div class="tagline">Data Handling Summary</div>
+</header>
+
+<p>This page is a plain-language summary of what FrostSight collects when monitoring your machine, what it doesn't, where it goes, and who owns it. It's meant to be read in under two minutes.</p>
+
+<section>
+<h2>What we collect</h2>
+<div class="cols">
+  <div class="card yes">
+    <h3>Collected</h3>
+    <ul>
+      <li>Motor and compressor electrical load</li>
+      <li>Vibration at the beater drive and compressor</li>
+      <li>Temperatures at six points through the refrigeration circuit</li>
+      <li>Machine on/off and control-signal state</li>
+      <li>Timestamped journal-button presses</li>
+      <li>Optional: staff-submitted photos or videos, only if voluntarily added through the QR report form</li>
+    </ul>
+  </div>
+  <div class="card no">
+    <h3>Not collected</h3>
+    <ul>
+      <li>No audio</li>
+      <li>No video captured by us</li>
+      <li>No personal data about your staff or customers</li>
+      <li>No sales or point-of-sale data</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>Where it lives</h2>
+<p>Sensor data is recorded on the monitoring hardware during the deployment and encrypted at collection when it's pulled off at pickup. The optional staff report form (for the QR-code photo/video/note submissions) is cloud-hosted, so submissions from every shift land in one shared record instead of scattered across individual phones.</p>
+</section>
+
+<section>
+<h2>Who owns it</h2>
+<p>You own the data collected from your machine — you receive all of it as part of your report. FrostSight also keeps a copy to build and refine diagnostic baselines across machines; when used this way, it's anonymized beyond the site name.</p>
+</section>
+
+<section>
+<h2>Retention</h2>
+<p>We retain deployment data to maintain and improve our diagnostic reference. If you'd like your data deleted from our records after a report is delivered, contact us and we'll take care of it.</p>
+</section>
+
+<div class="callout">
+  <strong>Questions or a deletion request?</strong> Contact Ben Tomasik at [CONTACT EMAIL] / [CONTACT PHONE].
+</div>
+
+<footer class="doc-footer">FrostSight (working name) — Ben Tomasik — DRAFT v0.1 — pricing subject to confirmation</footer>
+
+</body>
+</html>

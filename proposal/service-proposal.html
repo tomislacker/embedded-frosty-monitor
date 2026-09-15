@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FrostSight — Service Proposal</title>
+<style>
+  :root {
+    --accent: #1a4d6d;
+    --accent-light: #e8eef2;
+    --text: #1c1c1c;
+    --muted: #5a6570;
+    --border: #d4dbe1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.48;
+    font-size: 14px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem 1.75rem 2rem;
+  }
+  header.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.1rem;
+  }
+  header.doc-header h1 {
+    color: var(--accent);
+    margin: 0;
+    font-size: 1.9rem;
+    letter-spacing: -0.01em;
+  }
+  header.doc-header .tagline {
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: right;
+  }
+  .draft-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.05rem 0.35rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 1.25rem;
+    margin: 1.3rem 0 0.45rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.25rem;
+    page-break-after: avoid;
+  }
+  h2 .num {
+    display: inline-block;
+    color: #fff;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+  }
+  h3 {
+    color: var(--accent);
+    font-size: 1.02rem;
+    margin: 0.7rem 0 0.3rem;
+    page-break-after: avoid;
+  }
+  p { margin: 0.38rem 0; }
+  ul, ol { margin: 0.4rem 0; padding-left: 1.3rem; }
+  li { margin: 0.25rem 0; }
+  section { margin-bottom: 0.3rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6rem 0;
+    font-size: 0.87rem;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.55rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  td.price, th.price { text-align: right; white-space: nowrap; }
+  .callout {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    padding: 0.65rem 0.9rem;
+    margin: 0.7rem 0;
+    font-size: 0.93rem;
+    page-break-inside: avoid;
+  }
+  .callout strong { color: var(--accent); }
+  .anchor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin: 0.7rem 0;
+  }
+  .anchor-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+    page-break-inside: avoid;
+  }
+  .anchor-card .fig {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: block;
+  }
+  .cover {
+    text-align: center;
+    margin: 1.5rem 0 2rem;
+    page-break-after: always;
+  }
+  .cover h1 {
+    color: var(--accent);
+    font-size: 2.6rem;
+    margin-bottom: 0.2rem;
+    letter-spacing: -0.02em;
+  }
+  .cover .sub {
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .cover .prepared {
+    margin-top: 3rem;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .cover .fields {
+    margin: 2rem auto 0;
+    max-width: 420px;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+  .cover .fields div { margin: 0.5rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  .cover .fields .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .timeline-wrap { margin: 0.9rem 0; page-break-inside: avoid; }
+  .qa { page-break-inside: avoid; margin: 0.5rem 0; }
+  .qa p { margin: 0.2rem 0; }
+  .toc {
+    columns: 1;
+    font-size: 0.92rem;
+    margin: 0.5rem 0 1.5rem;
+  }
+  .toc ol { padding-left: 1.4rem; }
+  .toc li { margin: 0.3rem 0; }
+  .sig-block {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    page-break-inside: avoid;
+  }
+  .sig-block > div { flex: 1; }
+  .sig-line {
+    border-bottom: 1px solid var(--text);
+    height: 2.4rem;
+    margin-bottom: 0.25rem;
+  }
+  .sig-label { font-size: 0.82rem; color: var(--muted); }
+  footer.doc-footer {
+    margin-top: 1.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .page-footer-note {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+  a { color: var(--accent); }
+  @page { size: letter; margin: 0.75in; }
+  @media print {
+    body { padding: 0; max-width: none; }
+    th, .callout, .cover .prepared { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table, .callout, .anchor-card, .timeline-wrap, .qa, .sig-block { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>FrostSight <span class="draft-tag">DRAFT</span></h1>
+  <div class="sub">Diagnostic &amp; Continuous Monitoring for Frozen-Drink Machines</div>
+  <p style="max-width: 480px; margin: 0 auto; color: var(--muted); font-size: 0.95rem;">A written diagnosis backed by 24/7 sensor data — not a guess made during a one-hour service call.</p>
+  <div class="fields">
+    <div><span class="label">Prepared for</span><br>[CUSTOMER / SITE NAME]</div>
+    <div><span class="label">Prepared by</span><br>Ben Tomasik — FrostSight</div>
+    <div><span class="label">Date</span><br>[DATE]</div>
+    <div><span class="label">Machines under discussion</span><br>[MACHINE MODEL(S) / COUNT]</div>
+  </div>
+  <div class="toc">
+    <ol>
+      <li>Executive summary</li>
+      <li>The problem: what downtime and guesswork actually cost</li>
+      <li>What we monitor</li>
+      <li>How an engagement works</li>
+      <li>Deliverables</li>
+      <li>Offerings &amp; pricing</li>
+      <li>Safety, data handling &amp; liability summary</li>
+      <li>Assumptions</li>
+      <li>FAQ</li>
+      <li>Next step / acceptance</li>
+    </ol>
+  </div>
+</div>
+
+<header class="doc-header">
+  <h1 style="font-size:1.5rem;">FrostSight<span class="draft-tag">DRAFT</span></h1>
+  <div class="tagline">Service Proposal</div>
+</header>
+
+<section>
+<h2><span class="num">1</span>Executive summary</h2>
+<p>Your frozen-drink machine is a revenue anchor, not just a piece of equipment — and when it fails, it fails expensively, on a schedule it chooses. Diagnosing it today is largely guesswork: a technician listens, looks, and maybe catches the problem, if it happens to act up during the hour they're standing there.</p>
+<p>FrostSight instruments your machine with 12+ sensor channels — motor and compressor electrical load, vibration at the drive and compressor, six temperature points through the refrigeration circuit, and control-system state — and records continuously, 24/7, for up to two weeks. At the end of that window you get a written diagnosis: what's actually wrong, and what it will take to fix it. Your staff can flag anything unusual the moment it happens with a single button press, so the report explains real events, not just averages.</p>
+<p>The result: you fix the right thing the first time, you make repair-or-replace calls on data instead of a hunch, and you catch developing failures before they take the machine down on a Friday night.</p>
+</section>
+
+<section>
+<h2><span class="num">2</span>The problem: what downtime and guesswork actually cost</h2>
+<p>A frozen-drink machine is a small, hard-working refrigeration system with a mechanical beater bar layered on top, running long hours in a hot kitchen or back bar. When it goes down, the cost isn't just the repair bill — it's lost sales, spoiled product, and a service call priced for an emergency instead of a scheduled visit.</p>
+<div class="anchor-grid">
+  <div class="anchor-card"><span class="fig">$2,500–$8,000</span>Typical all-in cost of an emergency refrigeration failure — labor, expedited parts, and lost product, industry figures.</div>
+  <div class="anchor-card"><span class="fig">$500–$1,500/night</span>Revenue at risk when a machine goes down on a busy night, at typical utilization and rated drink capacity.</div>
+  <div class="anchor-card"><span class="fig">$600–$1,700 vs. $4,600–$5,300</span>A compressor replacement against a new machine — the classic "50% rule" repair-or-replace decision our data is built to de-risk.</div>
+  <div class="anchor-card"><span class="fig">$250–$500</span>The retail value of a single dumped batch, before counting the liquor already in it.</div>
+</div>
+<p>Standard service calls typically run $100–$1,200 with a 2-hour minimum; after-hours dispatch adds $150–$350, and emergency labor runs 1.5–2× standard rates — on top of whatever the actual repair costs.</p>
+<div class="callout">
+  <strong>The intermittent-failure problem.</strong> The failures that cost the most are the ones that vanish the moment a technician is standing there. A knock that only happens on the third freeze cycle of the night, a compressor that short-cycles only after two hours of hot-kitchen ambient, a temperature drift that only shows up under Friday-night volume — a one-hour service call cannot catch these. A two-week continuous recording does, because it's running when the problem happens, not just when someone is watching.
+</div>
+<p>For comparison, renting a bare industrial data logger — no installation, no analysis, no report — typically runs $125–$350/week on its own. A comparable preventive-maintenance contract runs $300–$1,200/year per piece of equipment and still amounts to two blind visits a year, not continuous data.</p>
+</section>
+
+<section>
+<h2><span class="num">3</span>What we monitor</h2>
+<p>Every FrostSight deployment records the same core set of channels, chosen to cover the mechanical, electrical, and thermal systems that actually fail on these machines.</p>
+<table>
+  <thead><tr><th>What we measure</th><th>What it reveals</th></tr></thead>
+  <tbody>
+    <tr><td>Beater motor electrical load</td><td>Product freezing too fast or too slow, worn drive parts, a motor working harder than it should.</td></tr>
+    <tr><td>Compressor electrical load &amp; on/off cycling</td><td>Refrigerant loss, a failing compressor, short-cycling that's shortening its life right now.</td></tr>
+    <tr><td>Vibration at the drive and compressor</td><td>Bearing wear, belt problems, and knocking — caught early, before they're audible from across the bar.</td></tr>
+    <tr><td>Six temperature points across the refrigeration circuit</td><td>A clogged condenser, poor ventilation, and overall cooling performance — where the system is losing capacity.</td></tr>
+    <tr><td>Machine control signals</td><td>What the machine was trying to do at the moment a problem happened — not just what it was doing.</td></tr>
+    <tr><td>Staff journal button</td><td>What a person actually noticed, matched to the exact moment in the sensor record.</td></tr>
+  </tbody>
+</table>
+<p>That's 12+ distinct sensor channels running around the clock — more instrumentation than a technician can hold in their head during a single visit, and it never gets distracted or goes home at 6pm.</p>
+</section>
+
+<section>
+<h2><span class="num">4</span>How an engagement works</h2>
+<div class="timeline-wrap">
+<svg viewBox="0 0 760 150" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Engagement timeline: initial call, install visit, monitoring period, pickup and report, findings call">
+  <line x1="45" y1="40" x2="715" y2="40" stroke="#d4dbe1" stroke-width="3"/>
+  <g font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+    <circle cx="45" cy="40" r="10" fill="#1a4d6d"/>
+    <text x="45" y="70" font-size="11" text-anchor="middle" fill="#1c1c1c" font-weight="600">Initial call</text>
+    <text x="45" y="85" font-size="9.5" text-anchor="middle" fill="#5a6570">Scope &amp; schedule</text>
+
+    <circle cx="215" cy="40" r="10" fill="#1a4d6d"/>
+    <text x="215" y="70" font-size="11" text-anchor="middle" fill="#1c1c1c" font-weight="600">Install visit</text>
+    <text x="215" y="85" font-size="9.5" text-anchor="middle" fill="#5a6570">~1 hr, qualified tech</text>
+
+    <circle cx="385" cy="40" r="10" fill="#1a4d6d"/>
+    <text x="385" y="70" font-size="11" text-anchor="middle" fill="#1c1c1c" font-weight="600">Monitoring</text>
+    <text x="385" y="85" font-size="9.5" text-anchor="middle" fill="#5a6570">1–2 weeks, 24/7</text>
+
+    <circle cx="555" cy="40" r="10" fill="#1a4d6d"/>
+    <text x="555" y="70" font-size="11" text-anchor="middle" fill="#1c1c1c" font-weight="600">Pickup &amp; report</text>
+    <text x="555" y="85" font-size="9.5" text-anchor="middle" fill="#5a6570">Written, 5 business days</text>
+
+    <circle cx="715" cy="40" r="10" fill="#1a4d6d"/>
+    <text x="715" y="70" font-size="11" text-anchor="middle" fill="#1c1c1c" font-weight="600">Findings call</text>
+    <text x="715" y="85" font-size="9.5" text-anchor="middle" fill="#5a6570">30 min, walk the data</text>
+  </g>
+</svg>
+</div>
+<ol>
+  <li><strong>Initial call.</strong> We confirm machine model(s), count, and scheduling. No site visit required to scope this.</li>
+  <li><strong>Install visit (~1 hour).</strong> A qualified technician installs the monitoring hardware. The machine is briefly offline during install; nothing is mounted in the food-product zone, and the monitor plugs into its own separate outlet — it does not interfere with the machine's operation once running.</li>
+  <li><strong>1–2 weeks of unattended monitoring.</strong> The machine runs normally. Staff press the journal button any time something seems off, and can optionally scan a QR code to add a note, photo, or video — all of it lands in one shared record, not scattered across whoever's phone happened to be nearby.</li>
+  <li><strong>Pickup.</strong> The technician returns, retrieves the monitoring hardware, and closes out the deployment.</li>
+  <li><strong>Written diagnostic report, within 5 business days.</strong> See the sample report linked below.</li>
+  <li><strong>Findings call (30 minutes).</strong> We walk through the report together and answer questions.</li>
+</ol>
+</section>
+
+<section>
+<h2><span class="num">5</span>Deliverables</h2>
+<p>Every Diagnostic Deployment produces a written report covering what the data shows, what it means for your machine, and what we recommend doing about it — plain language first, supporting data second. See the attached <a href="sample-diagnostic-report.html">sample diagnostic report</a> for a real example of the format and level of detail.</p>
+<p>We also maintain a reference of common failure patterns and what they look like in the data — see the <a href="failure-signatures.html">failure-signature reference</a> — which is what lets us say "this is a bearing, not a belt" with confidence instead of a shrug.</p>
+</section>
+
+<section>
+<h2><span class="num">6</span>Offerings &amp; pricing <span style="font-weight:400; font-size:0.85rem; color:var(--muted);">— DRAFT, subject to confirmation</span></h2>
+
+<h3>Diagnostic Deployment (ad-hoc / emergency)</h3>
+<table>
+  <thead><tr><th>Item</th><th class="price">Price</th></tr></thead>
+  <tbody>
+    <tr><td>Standard engagement — install visit, up to 2 weeks 24/7 monitoring (12+ sensor channels), removal, written diagnostic report, 30-min findings review call</td><td class="price">$850 flat</td></tr>
+    <tr><td>Additional monitoring week</td><td class="price">$175</td></tr>
+    <tr><td>Additional machine, same visit</td><td class="price">$425</td></tr>
+    <tr><td>Priority deployment (installed within 2 business days)</td><td class="price">+$250</td></tr>
+    <tr><td>Repair credit <em>(optional program)</em> — applied if repair is booked through us within 30 days of the report</td><td class="price">&minus;$150</td></tr>
+  </tbody>
+</table>
+
+<h3>Continuous Monitoring (subscription, 12-month agreement)</h3>
+<table>
+  <thead><tr><th>Machines</th><th class="price">Per machine / month</th></tr></thead>
+  <tbody>
+    <tr><td>1–2</td><td class="price">$69</td></tr>
+    <tr><td>3–9</td><td class="price">$59</td></tr>
+    <tr><td>10+</td><td class="price">$49</td></tr>
+  </tbody>
+</table>
+<p>One-time install: $199/machine. Includes monitoring hardware, quarterly on-site data collection with a written trend report, alert review, an annual sensor refresh, priority scheduling, and a discounted Diagnostic Deployment ($500) whenever a deep-dive is warranted.</p>
+
+<h3>Partner / distributor program</h3>
+<p>For distributors and service companies managing many machines across accounts, FrostSight becomes a differentiated service tier rather than a one-off add-on: you close repairs correctly the first time, you have warranty evidence on hand for manufacturer disputes, and reports go out co-branded under your name.</p>
+<table>
+  <thead><tr><th>Program element</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td>Wholesale rate</td><td>From $39/machine/month at 25+ machines under management</td></tr>
+    <tr><td>Installs</td><td>Partner-performed after FrostSight training</td></tr>
+    <tr><td>Reporting</td><td>Co-branded diagnostic and trend reports</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2><span class="num">7</span>Safety, data handling &amp; liability summary</h2>
+<p>All installs are performed by a qualified technician, with the machine unplugged and locked out for the duration of any electrical work. Nothing is mounted in the food-product zone. The monitor itself is electrically isolated and separately powered from its own outlet — it never taps or shares the machine's dedicated circuit, and no line voltage is ever present inside the monitoring enclosure.</p>
+<p>We collect machine telemetry only — electrical load, vibration, temperature, and control-state data, plus timestamped button presses. No audio, no video from us, and no personal or point-of-sale data. You receive all of your data; we retain a copy to build and improve our diagnostic reference across machines. Full detail is in the attached <a href="data-handling.html">data handling summary</a>.</p>
+<p>This is a diagnostic service. Findings and recommendations are exactly that — recommendations. Any repair work is quoted and performed separately.</p>
+</section>
+
+<section>
+<h2><span class="num">8</span>Assumptions</h2>
+<ul>
+  <li>Reasonable access to the machine for both the install and removal visits.</li>
+  <li>One staff member briefed on the journal button (takes about a minute).</li>
+  <li>The machine is on its own dedicated circuit per manufacturer requirements — this is a prerequisite for the machine itself, not something we install.</li>
+  <li>Pricing above assumes a standard machine — Frosty Factory line and similar. Other makes/models are assessed on request.</li>
+</ul>
+</section>
+
+<section>
+<h2><span class="num">9</span>FAQ</h2>
+<p><strong>Does it affect my machine's operation?</strong> No. It's sensors only — nothing intercepts or controls the machine, and nothing sits in the food-product zone.</p>
+<p><strong>What if the problem doesn't happen during the monitoring window?</strong> You can extend monitoring at $175/week, and even a "quiet" two weeks has value — it establishes a healthy baseline to compare against later.</p>
+<p><strong>Do my staff need training?</strong> One button. Press it if something seems off. That's the whole ask; the QR form for photos and notes is optional.</p>
+<p><strong>What machines are supported?</strong> The Frosty Factory line (117A, 127A, 137A) and similar frozen-drink machines. Other makes are assessed on request.</p>
+<p><strong>Will this catch every possible problem?</strong> No monitoring window guarantees a fault occurs during it. What it does guarantee is a real 24/7 record instead of a one-hour snapshot, which is where most intermittent failures actually get caught.</p>
+<p><strong>Who installs and removes the equipment?</strong> A qualified technician, on both ends of the engagement.</p>
+<p><strong>Does the monitor need its own outlet?</strong> Yes — it's a firm requirement, covered in the safety section above.</p>
+<p><strong>What happens to my data?</strong> You get all of it. See the data handling summary for the full answer.</p>
+</section>
+
+<section>
+<h2><span class="num">10</span>Next step / acceptance</h2>
+<p>To move forward, sign below and we'll schedule the install visit. Your first engagement doubles as a pilot reference for FrostSight.</p>
+<div class="sig-block">
+  <div>
+    <div class="sig-line"></div>
+    <div class="sig-label">Customer signature / date</div>
+  </div>
+  <div>
+    <div class="sig-line"></div>
+    <div class="sig-label">Ben Tomasik, FrostSight / date</div>
+  </div>
+</div>
+</section>
+
+<footer class="doc-footer">FrostSight (working name) — Ben Tomasik — DRAFT v0.1 — pricing subject to confirmation</footer>
+
+</body>
+</html>

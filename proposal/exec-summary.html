@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FrostSight — Executive Summary</title>
+<style>
+  :root {
+    --accent: #1a4d6d;
+    --accent-light: #e8eef2;
+    --text: #1c1c1c;
+    --muted: #5a6570;
+    --border: #d4dbe1;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.42;
+    font-size: 11.5px;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0.8rem 1.3rem;
+  }
+  header.doc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.6rem;
+  }
+  header.doc-header h1 {
+    color: var(--accent);
+    margin: 0;
+    font-size: 1.7rem;
+    letter-spacing: -0.01em;
+  }
+  header.doc-header .tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: right;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 1rem;
+    margin: 0.55rem 0 0.22rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.12rem;
+  }
+  p { margin: 0.22rem 0; }
+  .lede {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0.15rem 0 0.4rem;
+  }
+  ul.outcomes {
+    margin: 0.15rem 0 0.3rem;
+    padding-left: 1.1rem;
+  }
+  ul.outcomes li { margin: 0.1rem 0; }
+  .callout {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    padding: 0.4rem 0.65rem;
+    margin: 0.3rem 0;
+    font-size: 0.9rem;
+  }
+  .two-col {
+    display: flex;
+    gap: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .two-col > div { flex: 1; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.2rem 0;
+    font-size: 0.84rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.22rem 0.4rem;
+    text-align: left;
+  }
+  th {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  td.price, th.price { text-align: right; white-space: nowrap; }
+  .anchors {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  .anchors h3 {
+    margin: 0 0 0.2rem;
+    color: var(--accent);
+    font-size: 0.88rem;
+  }
+  .anchors ul { margin: 0; padding-left: 1rem; }
+  .anchors li { margin: 0.15rem 0; }
+  .cta {
+    padding: 0.4rem 0.6rem;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 4px;
+    font-size: 0.88rem;
+  }
+  .cta strong { display: block; margin-bottom: 0.08rem; }
+  footer.doc-footer {
+    margin-top: 0.4rem;
+    padding-top: 0.22rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.63rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .draft-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.05rem 0.35rem;
+    margin-left: 0.4rem;
+    vertical-align: middle;
+  }
+  @page { size: letter; margin: 0.75in; }
+  @media print {
+    body { padding: 0; max-width: none; font-size: 11.5px; }
+    .cta { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section, table, .callout, .anchors { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <h1>FrostSight<span class="draft-tag">DRAFT</span></h1>
+  <div class="tagline">Frozen-drink machine diagnostics &amp; monitoring<br>Executive Summary</div>
+</header>
+
+<p class="lede">Your frozen-drink machine is a revenue anchor, not just a piece of equipment — and when it fails, it fails expensively, on a schedule it chooses. Right now, diagnosing it is guesswork: a tech listens, looks, maybe catches the problem if it happens to act up during the one hour they're standing there.</p>
+
+<h2>What FrostSight does</h2>
+<p>We instrument your machine with 12+ sensor channels — motor and compressor electrical load, vibration at the drive and compressor, six temperature points through the refrigeration circuit, and control-system state — and record continuously, 24/7, for up to two weeks. At the end of that window you get a written diagnosis: what's actually wrong, and what it will take to fix it.</p>
+
+<ul class="outcomes">
+  <li><strong>Fix the right thing the first time</strong> — no more parts-cannon repairs based on a hunch.</li>
+  <li><strong>Repair-or-replace on data, not guesswork</strong> — know whether a $600–$1,700 compressor job is worth it against a $4,600–$5,300 new machine before you spend it.</li>
+  <li><strong>Catch developing failures before they become a Friday-night dead machine.</strong></li>
+</ul>
+
+<div class="callout">
+  <strong>See something, say something.</strong> Your staff press one button the moment something seems off — a noise, a leak, a bad pour. That moment is matched directly to the sensor record, so the report explains what actually happened, not just what the machine looked like on average.
+</div>
+
+<h2>Pricing at a glance <span style="font-weight:400; font-size:0.8rem; color:var(--muted);">(DRAFT — subject to confirmation)</span></h2>
+<table>
+  <thead>
+    <tr><th>Offering</th><th>What's included</th><th class="price">Price</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Diagnostic Deployment</td><td>Install, up to 2 weeks monitoring, removal, written report, findings call</td><td class="price">$850 flat</td></tr>
+    <tr><td>&nbsp;&nbsp;+ Additional monitoring week</td><td>Per extra week beyond the standard two</td><td class="price">$175</td></tr>
+    <tr><td>Continuous Monitoring</td><td>Per machine/month, 1–2 machines, 12-month agreement + $199/machine install</td><td class="price">$69/mo</td></tr>
+    <tr><td>Partner / Distributor Program</td><td>25+ machines under management, wholesale rate</td><td class="price">from $39/mo</td></tr>
+  </tbody>
+</table>
+
+<div class="two-col">
+  <div class="anchors">
+    <h3>Why this pays for itself</h3>
+    <ul>
+      <li>An emergency refrigeration failure typically runs <strong>$2,500–$8,000</strong> all-in — labor, expedited parts, lost product.</li>
+      <li>A dead machine on a busy night puts <strong>$500–$1,500</strong> in at-risk sales behind the bar, per night it's down.</li>
+      <li>Intermittent problems are the expensive kind — they vanish the moment a tech is standing there. A two-week recording catches what a one-hour visit can't.</li>
+    </ul>
+  </div>
+  <div class="cta">
+    <strong>Next step</strong>
+    Schedule an install visit. Your first engagement doubles as a pilot reference — see the full proposal, sample report, and failure-signature reference for detail.
+  </div>
+</div>
+
+<footer class="doc-footer">FrostSight (working name) — Ben Tomasik — DRAFT v0.1 — pricing subject to confirmation</footer>
+
+</body>
+</html>

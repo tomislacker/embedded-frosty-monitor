@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FrostSight — Staff Sheet</title>
+<style>
+  :root {
+    --accent: #1a4d6d;
+    --accent-light: #e8eef2;
+    --text: #1c1c1c;
+    --muted: #5a6570;
+    --border: #d4dbe1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 1.25rem 1.75rem;
+  }
+  header.doc-header {
+    text-align: center;
+    border-bottom: 4px solid var(--accent);
+    padding-bottom: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  header.doc-header h1 {
+    color: var(--accent);
+    margin: 0;
+    font-size: 2.4rem;
+    letter-spacing: -0.02em;
+  }
+  header.doc-header .tagline {
+    color: var(--muted);
+    font-size: 1.15rem;
+    margin-top: 0.25rem;
+  }
+  .lede {
+    font-size: 1.25rem;
+    text-align: center;
+    margin: 1rem 0;
+    line-height: 1.4;
+  }
+  .job {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 1rem 1.3rem;
+    margin: 1.1rem 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .job h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.4rem;
+  }
+  .job p {
+    font-size: 1.3rem;
+    line-height: 1.45;
+    margin: 0.4rem 0;
+    font-weight: 600;
+  }
+  .job .done {
+    font-size: 1.05rem;
+    font-weight: 400;
+    opacity: 0.9;
+  }
+  .weird {
+    margin: 1.1rem 0;
+  }
+  .weird h3 {
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  .weird ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .weird li {
+    background: var(--accent-light);
+    border-left: 4px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 0.7rem;
+    font-size: 1.05rem;
+    font-weight: 500;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .extra {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+    margin: 1.3rem 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+  }
+  .qr-box {
+    flex: 0 0 auto;
+    width: 110px;
+    height: 110px;
+    border: 3px dashed var(--muted);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    padding: 0.4rem;
+  }
+  .extra p {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+  .no-unplug {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    border: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.7rem;
+    margin: 1.2rem 0 0.5rem;
+  }
+  .no-unplug .sub {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-top: 0.3rem;
+  }
+  footer.doc-footer {
+    margin-top: 1rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  @page { size: letter; margin: 0.75in; }
+  @media print {
+    body { padding: 0; max-width: none; }
+    section, .job, .extra, .no-unplug { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <h1>FrostSight</h1>
+  <div class="tagline">This box is monitoring this machine's health.</div>
+</header>
+
+<p class="lede">It does not change how the machine works.</p>
+
+<div class="job">
+  <h2>YOUR JOB</h2>
+  <p>If the machine does anything weird — noise, leak, wrong texture, warm drinks — press the button on the box.</p>
+  <p class="done">That's it. You're done.</p>
+</div>
+
+<div class="weird">
+  <h3>What counts as "weird"</h3>
+  <ul>
+    <li>A new or louder noise</li>
+    <li>Any leak, drip, or puddle</li>
+    <li>Drink texture off — too slushy or too hard</li>
+    <li>Drinks coming out warm</li>
+    <li>Machine seems to be working harder than usual</li>
+    <li>Anything else that just seems off</li>
+  </ul>
+</div>
+
+<div class="extra">
+  <div class="qr-box">QR code here</div>
+  <p>Want to tell us more? Scan the QR code and add a note, photo, or video. It's optional — the button press alone is enough.</p>
+</div>
+
+<div class="no-unplug">
+  Do not unplug this box.
+  <div class="sub">It runs on its own outlet and needs to stay recording the whole time it's here.</div>
+</div>
+
+<footer class="doc-footer">FrostSight (working name) — Ben Tomasik — DRAFT v0.1 — pricing subject to confirmation</footer>
+
+</body>
+</html>
