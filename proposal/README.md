@@ -11,7 +11,7 @@ internal only — never send it to a customer.
 | File | Audience | Purpose | Printed length |
 |---|---|---|---|
 | `exec-summary.html` | Owner-operator, first contact | One-page teaser: the problem, what we do, pricing at a glance, call to action | 1 page |
-| `service-proposal.html` | Owner-operator (primary) + distributors (partner section) | The full proposal: economics, methodology, engagement lifecycle, pricing, safety/data summary, FAQ, signature block | 7 pages (cover + 6 content pages) |
+| `service-proposal.html` | Owner-operator (primary) + distributors (partner section) | The full proposal: economics, methodology, engagement lifecycle, pricing (now a three-plan Continuous Monitoring ladder — Basic/Plus/Live), safety/data summary, FAQ, signature block | 7 pages (cover + 6 content pages) |
 | `data-handling.html` | Any customer asking "what happens to my data" | What's collected, what isn't, where it lives, who owns it, retention | 1 page |
 | `staff-sheet.html` | On-site staff at the machine | Laminated placard: press the button if something's weird | 1 page |
 
@@ -50,9 +50,15 @@ callout boxes.
 5. Headers/footers: turn **off** the browser's own header/footer — each
    doc already has its own footer line built in.
 
-Verified page counts (Chromium headless, `--print-to-pdf`, default
-margins): exec-summary 1p, service-proposal 7p (cover + 6), data-handling
-1p, staff-sheet 1p.
+Verified page counts (Chromium headless, `--print-to-pdf` +
+`pdfinfo`/`pdftoppm` visual check, default margins): exec-summary 1p,
+service-proposal 7p (cover + 6), data-handling 1p, staff-sheet 1p. Adding
+the three-plan Continuous Monitoring ladder pushed exec-summary's pricing
+table to the edge of the page; it's held at 1 page with print-only spacing
+tweaks scoped to that table/footer (`.pricing-table`, `.two-col`, `footer`
+rules in its `@media print` block) — no layout or column structure
+changed. Re-verify page counts after future edits to either file's pricing
+section.
 
 ## What to customize before sending
 

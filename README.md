@@ -49,6 +49,21 @@ and control chain were actually doing.
   enclosure) and cheap, detachable "sensor pods" that take the grease/sugar
   contamination and get replaced, not the core.
 
+## Product tiers
+
+DAQ Pro, described above, is one of four hardware tiers built on the same
+firmware, data format, and analysis stack — see
+[docs/product-line.md](docs/product-line.md) for the full comparison and
+[ADR 0007](docs/adr/0007-product-tier-strategy.md) for the decision behind
+the tier structure.
+
+| Tier | BOM (est.) | Install | Status |
+|---|---|---|---|
+| 1 — Guard | ≈$26 | Permanent, every machine | Designed |
+| 2 — Logger | ≈$55–70 | Permanent | Designed |
+| 3 — DAQ Pro | $152.60 | Portable (this repo's flagship) | **Built** |
+| 4 — Live | $160 WiFi / ≈$210 cellular | Permanent + connectivity | Firmware in progress |
+
 ## Repo map
 
 | Path | Owner content | Description |

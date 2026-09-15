@@ -138,6 +138,13 @@
     th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .callout { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     section, table, .callout, .anchors { page-break-inside: avoid; }
+    .pricing-table th, .pricing-table td { padding: 0.1rem 0.4rem; }
+    .two-col { margin-top: 0.1rem; }
+    footer.doc-footer { margin-top: 0.15rem; padding-top: 0.1rem; }
+    h2 { margin: 0.4rem 0 0.15rem; }
+    .callout { padding: 0.3rem 0.55rem; margin: 0.2rem 0; }
+    .anchors, .cta { padding: 0.3rem 0.5rem; }
+    ul.outcomes { margin: 0.1rem 0 0.2rem; }
   }
 </style>
 </head>
@@ -164,7 +171,7 @@
 </div>
 
 <h2>Pricing at a glance <span style="font-weight:400; font-size:0.8rem; color:var(--muted);">(DRAFT — subject to confirmation)</span></h2>
-<table>
+<table class="pricing-table">
   <thead>
     <tr><th>Offering</th><th>What's included</th><th class="price">Price</th></tr>
   </thead>
@@ -172,11 +179,13 @@
     <tr><td>Diagnostic Deployment</td><td>Install, up to 2 weeks monitoring, removal, written report, findings call<sup>1</sup></td><td class="price">$850 flat</td></tr>
     <tr><td>&nbsp;&nbsp;+ Additional monitoring week</td><td>Per extra week beyond the standard two</td><td class="price">$175</td></tr>
     <tr><td>&nbsp;&nbsp;Founding-customer pilot rate</td><td>First five engagements, in exchange for a case study</td><td class="price">$450</td></tr>
-    <tr><td>Continuous Monitoring</td><td>Per machine/month, 1–2 machines, 12-month agreement + $199/machine install</td><td class="price">$69/mo</td></tr>
+    <tr><td>Monitor Basic</td><td>Guard — local alert light, quarterly check<sup>2</sup></td><td class="price">$29/mo</td></tr>
+    <tr><td>Monitor Plus</td><td>Logger — + vibration, trend reports</td><td class="price">$69/mo</td></tr>
+    <tr><td>Monitor Live</td><td>Live (WiFi) — + real-time alerts, dashboard</td><td class="price">$99/mo</td></tr>
     <tr><td>Partner / Distributor Program</td><td>25+ machines under management, wholesale rate</td><td class="price">from $39/mo</td></tr>
   </tbody>
 </table>
-<p style="font-size:0.72rem; color:var(--muted); margin:2px 0 0;"><sup>1</sup> Fee fully credited toward Continuous Monitoring if you subscribe within 60 days of your report.</p>
+<p style="font-size:0.72rem; color:var(--muted); margin:2px 0 0;"><sup>1</sup> Credited toward monitoring within 60 days. <sup>2</sup> 12-mo + $199 install; discounts to &minus;30% at 10+.</p>
 
 <div class="two-col">
   <div class="anchors">

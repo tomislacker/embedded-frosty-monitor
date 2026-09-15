@@ -4,6 +4,18 @@ Ordered, post-MVP. Nothing here blocks M0-M5 (see [README.md](../README.md)
 for the milestone list); this is what comes after the base unit is proven
 on hardware.
 
+As of [ADR 0007](adr/0007-product-tier-strategy.md), frosty-monitor is one
+platform across four hardware tiers (Guard, Logger, DAQ Pro, Live) — see
+[docs/product-line.md](product-line.md) for the full comparison. The items
+below predate that decision and are written from DAQ Pro's point of view,
+since DAQ Pro is the only tier built so far; they aren't rewritten here,
+but several of them are now explicitly *part of* a later tier's build-out
+rather than standalone gold-plating, and are cross-referenced as such below.
+The tier build-out sequence itself — validate DAQ Pro → Live pilot → Logger
+→ Guard at volume, each tier's thresholds calibrated from the tier above —
+lives in [docs/product-line.md](product-line.md#build-out-sequence) and
+isn't repeated here.
+
 ## 1. Bench-validation items deferred from M0
 
 - **24VAC opto trigger threshold.** The opto-isolated input on the
@@ -45,15 +57,31 @@ companion phone app, so a tech can pull recent data without opening the
 enclosure or removing the SD card — useful for a quick mid-deployment
 check without disturbing the install.
 
+**Now also part of Guard/Logger.** Per
+[docs/product-line.md](product-line.md), Tier 1 (Guard) has no SD card at
+all and relies on BLE walk-up readout as its *only* offload path, and Tier
+2 (Logger) offers it as an alternative to pulling the card. `BleSink` is no
+longer just a DAQ Pro convenience item — it's load-bearing for the two
+cheapest tiers.
+
 ## 4. WiFi/cloud upload
 
 A `CloudSink` built around AWS IoT Core: a per-device X.509 certificate, an
 MQTT topic per deployment, and chunked upload of rotated files as they
 close, landing in Timestream or S3+Athena for downstream analytics. This
-is explicitly gold-plating until field value is proven — it adds
+was explicitly gold-plating until field value was proven — it adds
 infrastructure and ongoing cost for a workflow the SD-card-swap MVP
-already covers; it's worth building once there's a real case for
+already covers; the plan was to build it once there was a real case for
 near-real-time or fleet-wide visibility, not before.
+
+**Status update:** that case now exists as Tier 4 (Live) in
+[docs/product-line.md](product-line.md), and `CloudSink` plus an AWS
+Terraform skeleton are in progress this iteration. See
+[docs/firmware/connectivity.md](firmware/connectivity.md) for the firmware
+side and [docs/cloud/architecture.md](cloud/architecture.md) for the
+in-repo `cloud/` skeleton this item now points to. A Live pilot on one
+friendly customer follows DAQ Pro bench validation, per the build-out
+sequence.
 
 ## 5. v2 permanent-install monitor
 
@@ -63,6 +91,14 @@ safely from the machine itself instead of an external adapter. This is the
 natural next step once portable deployments (per
 [ADR 0001](adr/0001-portable-daq-first.md)) have produced enough
 failure-signature data to justify leaving a unit in a machine permanently.
+
+**Now formalized as Guard/Logger.** This item is what
+[ADR 0007](adr/0007-product-tier-strategy.md) turned into concrete Tier 1
+(Guard) and Tier 2 (Logger) definitions — see
+[docs/product-line.md](product-line.md) for their BOMs and status. The
+ESP32-C3 port referenced there is the firmware-side piece of "cost-reduced
+BOM" that this item originally gestured at; a custom PCB remains a further
+future step past that port, not a prerequisite for it.
 
 ## 6. Other manufacturers/models expansion
 
