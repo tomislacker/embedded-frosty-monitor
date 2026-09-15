@@ -169,7 +169,10 @@ def detect_short_cycling(dep: Deployment) -> SignatureResult:
     look identical to this detector; a genuinely intermittent 24VAC signal
     (see roadmap bench-validation item on the opto trigger threshold)
     could also manufacture short on/off blips that aren't mechanical at
-    all.
+    all. When `refrigerant_raw` is present and elevated alongside a
+    short-cycling trigger it corroborates the refrigerant-loss reading, but
+    that gas sensor is EXPERIMENTAL and uncalibrated -- never sufficient on
+    its own to call a refrigerant leak.
     """
     channels, _vib = _normalize(dep)
     cmd = _bool_col(channels, "compressor_cmd")
@@ -775,4 +778,164 @@ def detect_motor_degradation(dep: Deployment) -> SignatureResult:
         },
         explanation=explanation,
         evidence=daily_median,
+    )
+
+
+# --- 7. seal failure (leak) -------------------------------------------------
+
+# Sustained drip rate at/above this many drops/min, at the machine's own
+# drip-tube telltale, is treated as abnormal background leakage rather than
+# routine handling noise. (provisional -- pending field calibration against
+# a real drip-tube telltale)
+SEAL_DRIP_SUSTAINED_FLOOR_CPM = 3.0
+# Fraction of samples within a trailing window that must be at/above the
+# floor before we call it "sustained" rather than a brief cleaning-cycle
+# burst. (provisional)
+SEAL_DRIP_SUSTAINED_FRACTION = 0.6
+# Trailing window length used to evaluate "sustained." (provisional)
+SEAL_DRIP_SUSTAINED_WINDOW = pd.Timedelta(hours=6)
+# Daily-median drip-rate drift, in drops/min per day, above which we call
+# it a worsening trend rather than noise. (provisional)
+SEAL_DRIP_TREND_SLOPE_CPM_PER_DAY = 0.15
+# Need at least this many distinct days of data for a trend to mean
+# anything. (provisional)
+SEAL_DRIP_TREND_MIN_DAYS = 5
+
+
+def detect_seal_failure(dep: Deployment) -> SignatureResult:
+    """Flag rear-cylinder seal wear via the drip tube's telltale drip rate.
+
+    What it catches: two related but independently-sufficient signals read
+    from `drip_rate_cpm` (drops/min at the machine's own drip tube -- the
+    factory-designed telltale for rear cylinder seal wear, a warranty-
+    excluded wear item): (1) a *sustained* elevated drip rate -- at/above
+    `SEAL_DRIP_SUSTAINED_FLOOR_CPM` for at least
+    `SEAL_DRIP_SUSTAINED_FRACTION` of samples within a rolling
+    `SEAL_DRIP_SUSTAINED_WINDOW`, i.e. a steady drip rather than a moment of
+    handling; and/or (2) a positive multi-day trend in the daily-median drip
+    rate (Theil-Sen slope, the same robust-trend approach as
+    `detect_motor_degradation`) above `SEAL_DRIP_TREND_SLOPE_CPM_PER_DAY`,
+    evaluated once at least `SEAL_DRIP_TREND_MIN_DAYS` days of data are
+    available. Either signal alone is enough to trigger -- a machine that's
+    already dripping steadily by the start of the deployment window doesn't
+    need to wait out a multi-day trend, and a machine trending upward but
+    not yet past the sustained floor still deserves an early flag.
+
+    What it can't catch: it only reads the drip *rate* at the rear-seal
+    telltale -- it can't say which seal, gasket, or O-ring is worn, whether
+    what's leaking is refrigerant, mix, or a bit of both, or how close the
+    leak is to a failure point that would take the machine down. That's a
+    technician's call once the report points them at the drip tube.
+
+    False-positive modes: a cleaning/sanitizing cycle or a technician
+    flushing the cylinder produces a brief burst of drips that is *not* a
+    leak -- this is exactly why both signals here require sustained or
+    trending behavior rather than any single elevated reading;
+    `SEAL_DRIP_SUSTAINED_WINDOW`/`SEAL_DRIP_SUSTAINED_FRACTION` are sized to
+    ride out a short burst without triggering. A deployment shorter than
+    `SEAL_DRIP_TREND_MIN_DAYS` can still trigger on the sustained-floor
+    signal alone, so an install that happens to start mid-cleaning could
+    still be a false read for its first few hours -- cross-check the
+    written report against the deployment start time if a trigger looks
+    surprising. As with every detector in this module, the thresholds above
+    are provisional starting points, not calibrated against field data --
+    expect them to move once real machines log real seal-wear data.
+    """
+    channels, _vib = _normalize(dep)
+    if len(channels) == 0 or "drip_rate_cpm" not in channels.columns:
+        return SignatureResult(
+            triggered=False,
+            severity="none",
+            explanation=(
+                "No drip_rate_cpm data available (older firmware/deployment, "
+                "or channel not present)."
+            ),
+        )
+
+    drip = channels["drip_rate_cpm"].dropna()
+    if drip.empty:
+        return SignatureResult(
+            triggered=False,
+            severity="none",
+            explanation="No usable drip_rate_cpm samples.",
+        )
+
+    # --- signal 1: sustained elevated drip rate -----------------------
+    above_floor = (drip >= SEAL_DRIP_SUSTAINED_FLOOR_CPM).astype(float)
+    period = _median_sample_period(drip.index)
+    window_samples = max(1, int(SEAL_DRIP_SUSTAINED_WINDOW / period))
+    rolling_frac = above_floor.rolling(
+        window_samples, min_periods=max(1, window_samples // 2)
+    ).mean()
+    max_sustained_frac = float(rolling_frac.max()) if not rolling_frac.empty else 0.0
+    sustained_triggered = max_sustained_frac >= SEAL_DRIP_SUSTAINED_FRACTION
+
+    # --- signal 2: multi-day upward trend ------------------------------
+    daily_median = drip.groupby(drip.index.normalize()).median()
+    n_days = len(daily_median)
+    slope_cpm_per_day = 0.0
+    trend_triggered = False
+    if n_days >= SEAL_DRIP_TREND_MIN_DAYS:
+        day_numbers = np.arange(n_days, dtype=float)
+        values = daily_median.to_numpy()
+        slopes = []
+        for i in range(n_days):
+            for j in range(i + 1, n_days):
+                dx = day_numbers[j] - day_numbers[i]
+                if dx != 0:
+                    slopes.append((values[j] - values[i]) / dx)
+        slope_cpm_per_day = float(np.median(slopes)) if slopes else 0.0
+        trend_triggered = slope_cpm_per_day >= SEAL_DRIP_TREND_SLOPE_CPM_PER_DAY
+
+    triggered = bool(sustained_triggered or trend_triggered)
+    median_drip = float(drip.median())
+
+    if triggered:
+        reasons = []
+        if sustained_triggered:
+            reasons.append(
+                f"drip rate stayed at/above {SEAL_DRIP_SUSTAINED_FLOOR_CPM} "
+                f"drops/min for {max_sustained_frac * 100:.0f}% of a "
+                f"{SEAL_DRIP_SUSTAINED_WINDOW} window"
+            )
+        if trend_triggered:
+            reasons.append(
+                f"daily-median drip rate trending up "
+                f"{slope_cpm_per_day:.2f} drops/min/day across {n_days} days"
+            )
+        severity = (
+            "critical"
+            if (sustained_triggered and trend_triggered)
+            or max_sustained_frac >= SEAL_DRIP_SUSTAINED_FRACTION * 1.4
+            else "warning"
+        )
+        explanation = (
+            "Drip-tube telltale consistent with rear-cylinder seal wear: "
+            + "; ".join(reasons)
+            + ". Not a brief handling/cleaning burst -- this is a sustained "
+            "or worsening pattern."
+        )
+    else:
+        severity = "none"
+        explanation = (
+            f"Drip rate median {median_drip:.2f} drops/min; largest "
+            f"sustained window {max_sustained_frac * 100:.0f}% above the "
+            f"{SEAL_DRIP_SUSTAINED_FLOOR_CPM} drops/min floor (threshold "
+            f"{SEAL_DRIP_SUSTAINED_FRACTION * 100:.0f}%), trend "
+            f"{slope_cpm_per_day:.2f} drops/min/day over {n_days} days "
+            f"(threshold {SEAL_DRIP_TREND_SLOPE_CPM_PER_DAY}). No seal-wear "
+            "pattern."
+        )
+
+    return SignatureResult(
+        triggered=triggered,
+        severity=severity,
+        metrics={
+            "median_drip_cpm": median_drip,
+            "max_sustained_fraction": max_sustained_frac,
+            "slope_cpm_per_day": slope_cpm_per_day,
+            "n_days": n_days,
+        },
+        explanation=explanation,
+        evidence=daily_median if n_days else None,
     )

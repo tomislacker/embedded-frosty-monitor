@@ -5,6 +5,7 @@
 #include <string>
 
 #include "hal/digital_input.h"
+#include "hal/leak_sensors.h"
 #include "storage/record_format.h"
 #include "storage/record_types.h"
 #include "util/ring_buffer.h"
@@ -57,7 +58,7 @@ void test_channels_csv_header_exact() {
         "ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,"
         "temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,"
         "temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,"
-        "tcc_satisfied,hp_ok";
+        "tcc_satisfied,hp_ok,drip_rate_cpm,moisture_raw,refrigerant_raw";
     TEST_ASSERT_EQUAL_STRING(expected.c_str(), record_format::channelsCsvHeader().c_str());
 }
 
@@ -93,10 +94,14 @@ void test_channel_row_csv_field_count() {
     row.compressor_cmd = false;
     row.tcc_satisfied = true;
     row.hp_ok = true;
+    row.drip_rate_cpm = 0.0f;
+    row.moisture_raw = 0.0f;
+    row.refrigerant_raw = 0.0f;
 
     const std::string csv = record_format::formatChannelRowCsv(row);
-    // ts_iso, ts_unix_ms, 8 float channels, 4 bool channels = 14 fields.
-    TEST_ASSERT_EQUAL_UINT32(14, countFields(csv));
+    // ts_iso, ts_unix_ms, 8 float channels, 4 bool channels, 3 leak channels
+    // (drip_rate_cpm, moisture_raw, refrigerant_raw) = 17 fields.
+    TEST_ASSERT_EQUAL_UINT32(17, countFields(csv));
 }
 
 void test_channel_row_csv_nan_is_empty_field() {
@@ -117,10 +122,43 @@ void test_channel_row_csv_bools_are_0_1() {
     row.compressor_cmd = false;
     row.tcc_satisfied = true;
     row.hp_ok = false;
+    row.drip_rate_cpm = 0.0f;
+    row.moisture_raw = 0.0f;
+    row.refrigerant_raw = 0.0f;
 
     const std::string csv = record_format::formatChannelRowCsv(row);
-    TEST_ASSERT_TRUE(csv.size() > 4);
-    TEST_ASSERT_EQUAL_STRING("1,0,1,0", csv.substr(csv.size() - 7).c_str());
+    // Bools are no longer the last fields on the row (the leak channels were
+    // appended after them per the v1.1 forward-compat rule), so check the
+    // substring where they now fall rather than the row tail.
+    const std::string expectedMid = "1,0,1,0,0.000,0.000,0.000";
+    TEST_ASSERT_TRUE(csv.size() >= expectedMid.size());
+    TEST_ASSERT_EQUAL_STRING(expectedMid.c_str(), csv.substr(csv.size() - expectedMid.size()).c_str());
+}
+
+void test_channel_row_csv_leak_fields_present() {
+    ChannelRow row;
+    row.ts_unix_ms = 1700000000000ULL;
+    row.drip_rate_cpm = 4.5f;
+    row.moisture_raw = 0.123f;
+    row.refrigerant_raw = 0.045f;
+
+    const std::string csv = record_format::formatChannelRowCsv(row);
+    const std::string expectedTail = "4.500,0.123,0.045";
+    TEST_ASSERT_TRUE(csv.size() >= expectedTail.size());
+    TEST_ASSERT_EQUAL_STRING(expectedTail.c_str(), csv.substr(csv.size() - expectedTail.size()).c_str());
+}
+
+void test_channel_row_csv_leak_fields_nan_is_empty_field() {
+    ChannelRow row;
+    row.ts_unix_ms = 1700000000000ULL;
+    row.drip_rate_cpm = 2.0f;
+    row.moisture_raw = NAN;    // configured absent
+    row.refrigerant_raw = NAN; // configured absent
+
+    const std::string csv = record_format::formatChannelRowCsv(row);
+    TEST_ASSERT_NOT_EQUAL(std::string::npos, csv.find(",2.000,,")); // drip rate present, moisture+refrigerant empty
+    TEST_ASSERT_TRUE(csv.size() > 0);
+    TEST_ASSERT_EQUAL_INT(',', csv[csv.size() - 1]); // trailing empty refrigerant_raw field
 }
 
 void test_iso8601_format() {
@@ -204,6 +242,53 @@ void test_digital_input_millis_rollover_safe() {
     TEST_ASSERT_TRUE(mon.isActive(DigitalInputChannel::Hp, justBeforeRollover + 5));
 }
 
+// ---- leak_sensors: DripRateMonitor rolling window ----
+
+void test_drip_rate_zero_with_no_drops() {
+    DripRateMonitor mon;
+    TEST_ASSERT_EQUAL_UINT16(0, mon.dropCountInWindow(1000));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, mon.dripsPerMinute(1000));
+}
+
+void test_drip_rate_scales_drops_in_window_to_per_minute() {
+    DripRateMonitor mon;
+    // Two drops inside the 30s window -> 2 drops * (60000/30000) = 4 cpm.
+    mon.recordDrop(1000);
+    mon.recordDrop(5000);
+    TEST_ASSERT_EQUAL_UINT16(2, mon.dropCountInWindow(5000));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, 4.0f, mon.dripsPerMinute(5000));
+}
+
+void test_drip_rate_drops_age_out_of_window() {
+    DripRateMonitor mon;
+    mon.recordDrop(1000);
+    mon.recordDrop(2000);
+    TEST_ASSERT_EQUAL_UINT16(2, mon.dropCountInWindow(2000));
+
+    // 31s later, both drops are outside the 30s rolling window.
+    TEST_ASSERT_EQUAL_UINT16(0, mon.dropCountInWindow(2000 + DripRateMonitor::kWindowMs + 1000));
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, 0.0f, mon.dripsPerMinute(2000 + DripRateMonitor::kWindowMs + 1000));
+}
+
+void test_drip_rate_partial_aging_keeps_only_recent_drops() {
+    DripRateMonitor mon;
+    mon.recordDrop(0);       // will age out
+    mon.recordDrop(20000);   // still in window at t=35000 (age 15000ms)
+    mon.recordDrop(30000);   // still in window at t=35000 (age 5000ms)
+
+    const uint32_t now = 35000; // drop at 0 is 35000ms old, outside kWindowMs=30000
+    TEST_ASSERT_EQUAL_UINT16(2, mon.dropCountInWindow(now));
+    TEST_ASSERT_FLOAT_WITHIN(0.01f, 4.0f, mon.dripsPerMinute(now)); // 2 * (60000/30000)
+}
+
+void test_drip_rate_millis_rollover_safe() {
+    DripRateMonitor mon;
+    const uint32_t justBeforeRollover = 0xFFFFFFF0u;
+    mon.recordDrop(justBeforeRollover);
+    mon.recordDrop(justBeforeRollover + 5); // wraps past UINT32_MAX
+    TEST_ASSERT_EQUAL_UINT16(2, mon.dropCountInWindow(justBeforeRollover + 5));
+}
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
@@ -218,6 +303,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_channel_row_csv_field_count);
     RUN_TEST(test_channel_row_csv_nan_is_empty_field);
     RUN_TEST(test_channel_row_csv_bools_are_0_1);
+    RUN_TEST(test_channel_row_csv_leak_fields_present);
+    RUN_TEST(test_channel_row_csv_leak_fields_nan_is_empty_field);
     RUN_TEST(test_iso8601_format);
     RUN_TEST(test_vib_burst_header_bytes);
 
@@ -225,6 +312,12 @@ int main(int argc, char** argv) {
     RUN_TEST(test_digital_input_inactive_once_edges_age_out);
     RUN_TEST(test_digital_input_channels_are_independent);
     RUN_TEST(test_digital_input_millis_rollover_safe);
+
+    RUN_TEST(test_drip_rate_zero_with_no_drops);
+    RUN_TEST(test_drip_rate_scales_drops_in_window_to_per_minute);
+    RUN_TEST(test_drip_rate_drops_age_out_of_window);
+    RUN_TEST(test_drip_rate_partial_aging_keeps_only_recent_drops);
+    RUN_TEST(test_drip_rate_millis_rollover_safe);
 
     return UNITY_END();
 }

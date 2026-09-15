@@ -71,10 +71,25 @@ the Frosty Factory 117A/127A/137A line to other frozen-drink machine
 manufacturers and models, once the detection logic has proven itself on
 the machines this project started with.
 
-## 7. Drip/leak sensor for rear-seal failure
+## 7. Leak-sensing bench validation & threshold tuning
 
-A dedicated drip/leak sensor to directly detect rear-seal failure, rather
-than inferring it indirectly from other channels. This was descoped from
-the MVP base config to keep the initial BOM and channel count down; add it
-once the other seven failure modes have working detectors and rear-seal
-failure remains a gap.
+Seal-leak drip sensing is **now in scope**: the IR slot-type optical drop
+counter at the drip tube outlet ships in the base config (see
+[docs/hardware/bom.md](hardware/bom.md) and
+[docs/hardware/wiring-and-pinmap.md](hardware/wiring-and-pinmap.md)), giving
+a direct, quantitative rear-seal-wear signal (`drip_rate_cpm`) instead of
+relying on indirect inference from other channels. The under-machine
+moisture pad and the refrigerant gas sensor remain optional add-ons on top
+of that base sensor, not part of the base config.
+
+What's still open:
+
+- **Gas-sensor bench validation.** The refrigerant gas-sensor add-on is
+  experimental — cheap semiconductor modules drift and cross-react with
+  other vapors. Bench-validate before presenting its data to a customer;
+  until then, refrigerant-loss detection continues to rely on the indirect
+  signature (compressor short-cycling + reduced condenser ΔT).
+- **Drip-rate alert threshold calibration.** Establish what `drip_rate_cpm`
+  counts as healthy (occasional single drops during cleaning) versus a
+  genuine seal-wear signature, using field data across the three chassis
+  sizes.

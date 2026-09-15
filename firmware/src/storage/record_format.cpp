@@ -45,7 +45,7 @@ std::string channelsCsvHeader() {
     return "ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,"
            "temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,"
            "temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,"
-           "tcc_satisfied,hp_ok";
+           "tcc_satisfied,hp_ok,drip_rate_cpm,moisture_raw,refrigerant_raw";
 }
 
 std::string formatChannelRowCsv(const ChannelRow& row) {
@@ -79,6 +79,12 @@ std::string formatChannelRowCsv(const ChannelRow& row) {
     appendBoolField(out, row.tcc_satisfied);
     out += ',';
     appendBoolField(out, row.hp_ok);
+    out += ',';
+    appendFloatField(out, row.drip_rate_cpm);
+    out += ',';
+    appendFloatField(out, row.moisture_raw);
+    out += ',';
+    appendFloatField(out, row.refrigerant_raw);
 
     return out;
 }

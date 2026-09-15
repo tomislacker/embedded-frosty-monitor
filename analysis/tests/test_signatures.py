@@ -15,11 +15,13 @@ import pytest
 
 from frosty_analysis import synthetic as syn
 from frosty_analysis.signatures import (
+    SEAL_DRIP_SUSTAINED_FLOOR_CPM,
     SignatureResult,
     detect_belt_slip,
     detect_condenser_airflow,
     detect_knocking,
     detect_motor_degradation,
+    detect_seal_failure,
     detect_short_cycling,
     detect_tcc_never_satisfied,
 )
@@ -62,6 +64,11 @@ def belt_slip():
 @pytest.fixture(scope="module")
 def motor_degradation():
     return syn.make_motor_degradation(days=21, rng=SEED)
+
+
+@pytest.fixture(scope="module")
+def seal_failure():
+    return syn.make_seal_failure(days=21, rng=SEED)
 
 
 # --- basic shape sanity on the generators themselves -----------------------
@@ -203,6 +210,34 @@ def test_motor_degradation_does_not_trigger_on_a_longer_healthy_segment():
     long_healthy = syn.make_healthy(hours=24 * 10, rng=SEED)
     result = detect_motor_degradation(long_healthy)
     assert result.triggered is False
+
+
+# --- 7. seal failure (leak) -------------------------------------------------
+
+
+def test_seal_failure_triggers_on_its_segment(seal_failure):
+    result = detect_seal_failure(seal_failure)
+    assert isinstance(result, SignatureResult)
+    assert result.triggered is True
+    assert result.severity in {"warning", "critical"}
+
+
+def test_seal_failure_does_not_trigger_on_healthy(healthy):
+    result = detect_seal_failure(healthy)
+    assert result.triggered is False
+
+
+def test_seal_failure_does_not_trigger_on_short_cycling(short_cycling):
+    # Cross-check: short_cycling doesn't touch drip_rate_cpm at all, so it
+    # should carry the same healthy leak baseline and never trigger here.
+    result = detect_seal_failure(short_cycling)
+    assert result.triggered is False
+
+
+def test_healthy_drip_rate_stays_below_seal_failure_threshold(healthy):
+    # The healthy generator's drip baseline is isolated blips only, never
+    # sustained -- it should never even approach the sustained-drip floor.
+    assert healthy.channels["drip_rate_cpm"].max() < SEAL_DRIP_SUSTAINED_FLOOR_CPM
 
 
 # --- accepting bare DataFrames / Deployments (normalization) ---------------

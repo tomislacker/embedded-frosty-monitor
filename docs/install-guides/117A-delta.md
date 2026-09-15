@@ -33,6 +33,10 @@ placement logic — only the differences below apply. Read
   same reasoning, positions confirmed on-site given the smaller cabinet.
 - The 24V control-chain tap points remain valid in principle: same
   contactor (F0478), same HP switch (F0661), same transformer (F4995).
+- The leak-sensing kit (drip-tube drop counter, plus the optional moisture
+  pad / gas sensor add-ons) installs identically — confirm the drip tube's
+  exact location on this cabinet on-site before clipping the drop counter
+  on.
 
 ## What needs on-site judgment
 
@@ -56,7 +60,7 @@ placement logic — only the differences below apply. Read
    likely the dominant vibration frequencies at any given point. Pick a
    clean, flat, adhesive-friendly spot as close to the gearbox/motor
    coupling as accessible, note exactly where in `config.json`/`channel_map`
-   (see [137A.md § 8](137A.md#8-record-the-channel-map)), and flag it in the
+   (see [137A.md § 9](137A.md#9-record-the-channel-map)), and flag it in the
    deployment notes so it can be reconciled against later 117A installs.
 3. **Panel removal order and fasteners.** Don't assume 137A panel part
    numbers or fastener types — confirm against the physical unit before
@@ -69,10 +73,10 @@ placement logic — only the differences below apply. Read
 ## Everything else
 
 Follow [137A.md](137A.md) steps 1 (bench provisioning), 3 (CT install), 6
-(temperature probes — same targets), 7 (cable routing), 8 (record channel
-map), 9 (close-up/verify), 10 (journaling sticker/briefing), and 11
-(pickup) as written, adapting only for the smaller cabinet's physical
-clearances. The [expected-signals table](137A.md#expected-signals-on-a-healthy-machine)
+(temperature probes — same targets), 7 (leak-sensing add-ons), 8 (cable
+routing), 9 (record channel map), 10 (close-up/verify), 11 (journaling
+sticker/briefing), and 12 (pickup) as written, adapting only for the
+smaller cabinet's physical clearances. The [expected-signals table](137A.md#expected-signals-on-a-healthy-machine)
 in the 137A guide is a reasonable starting baseline for the 117A too, but
 has **not** been validated against a real 117A yet — treat it as provisional
 alongside the rest of this document.

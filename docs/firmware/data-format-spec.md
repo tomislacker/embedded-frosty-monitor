@@ -103,7 +103,7 @@ values not explicitly present in `config.json` — into `manifest.json`.
 Rotated daily at the UTC day boundary. One row per second. Header, exactly:
 
 ```
-ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,tcc_satisfied,hp_ok
+ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,tcc_satisfied,hp_ok,drip_rate_cpm,moisture_raw,refrigerant_raw
 ```
 
 | Column | Type | Notes |
@@ -122,9 +122,38 @@ ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,temp_cylinder_c,temp_con
 | `compressor_cmd` | 0/1 | AC-presence, contactor coil |
 | `tcc_satisfied` | 0/1 | TCC microswitch state, if tapped |
 | `hp_ok` | 0/1 | High-pressure switch state, if tapped |
+| `drip_rate_cpm` | float | drops/minute at the drip tube, rolling window (v1.1) |
+| `moisture_raw` | float | 0.0-1.0 normalized, under-machine moisture pad, uncalibrated (optional add-on, v1.1) |
+| `refrigerant_raw` | float | 0.0-1.0 normalized, refrigerant gas sensor, uncalibrated and **EXPERIMENTAL** -- not a calibrated ppm reading (optional add-on, v1.1) |
 
 A missing/unwired sensor leaves its field **empty**, not zero. Booleans are
 always `0` or `1`, never `true`/`false`. `ts_iso` is always UTC.
+
+#### v1.1 additions
+
+`drip_rate_cpm`, `moisture_raw`, and `refrigerant_raw` were appended after
+`hp_ok` to add leak-detection channels: an IR slot-type optical drop counter
+at the machine's drip tube (rear-seal product-leak telltale), plus two
+optional ADS1115 add-on channels (under-machine capacitive moisture pad,
+compressor-compartment refrigerant gas sensor). See `firmware/src/pins.h`
+for the pin/channel assignments.
+
+- `drip_rate_cpm` is always populated (the drop counter is on-board, not an
+  optional add-on); it reads `0.000` when no drops have been seen in the
+  rolling window, not empty.
+- `moisture_raw`/`refrigerant_raw` follow the same missing-sensor convention
+  as every other channel: an absent/unconfigured add-on leaves the field
+  **empty**, not `0.000`.
+- Both are raw normalized readings, not calibrated physical units --
+  `refrigerant_raw` in particular must never be presented as calibrated ppm.
+
+This is a purely additive, non-breaking change per the versioning policy
+above: the three columns are appended strictly after the existing canonical
+ones, `schema_version` stays `1`, and it exercises exactly the append-only
+forward-compat rule this spec commits readers to -- a reader written against
+the v1 (14-column) header must keep working unmodified against this
+17-column header, reading the columns it knows by name/position from the
+front and ignoring the three trailing ones it doesn't recognize.
 
 ### `events_YYYYMMDD.jsonl`
 

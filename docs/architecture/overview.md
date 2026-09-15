@@ -13,8 +13,9 @@ breakouts, chosen for its built-in WiFi/BLE and PSRAM (see
 and the Arduino core over FreeRTOS (see
 [ADR 0005](../adr/0005-firmware-framework-platformio-arduino.md)). It talks
 to sensors over three buses — I2C, 1-Wire, and SPI — plus a handful of
-opto-isolated digital inputs, and it writes everything to a microSD card
-through a transport-abstracted storage layer (see
+opto-isolated digital inputs and a debounced drip-counter pulse input, and
+it writes everything to a microSD card through a transport-abstracted
+storage layer (see
 [ADR 0002](../adr/0002-microsd-storage-with-transport-abstraction.md)).
 
 ## Block diagram
@@ -125,6 +126,17 @@ air-out, ambient, with a fifth optional hopper probe) run on a single
 through a MAX31855 amplifier over SPI, since discharge-line temperatures
 exceed the DS18B20's practical range and accuracy at the temperatures of
 interest.
+
+### Leak sensing
+
+An IR slot-type optical drop counter clipped to the drip tube outlet is a
+base-config channel: it counts drops for a quantitative rear-seal-wear drip
+rate, in place of pure inference from other channels. Two optional add-ons
+extend this: a capacitive moisture pad under the machine/drip-tray footprint
+(ADS1115 channel A2), and an experimental semiconductor refrigerant
+gas-sensor pod low in the compressor compartment (ADS1115 channel A3) —
+uncalibrated and pending bench validation, so the primary refrigerant-loss
+signature remains the indirect one (short-cycling + reduced condenser ΔT).
 
 ### Control-state sensing
 

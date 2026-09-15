@@ -11,6 +11,7 @@
 #include "hal/current_sensor_ads1115.h"
 #include "hal/digital_input.h"
 #include "hal/i_storage_sink.h"
+#include "hal/leak_sensors.h"
 #include "hal/rtc_ds3231.h"
 #include "hal/temp_ds18b20.h"
 #include "hal/temp_thermocouple_max31855.h"
@@ -26,6 +27,7 @@ struct AppContext {
     TempDs18b20* tempDs18b20 = nullptr;
     ThermocoupleMax31855* thermocouple = nullptr;
     DigitalInputHal* digitalInput = nullptr;
+    LeakSensorsHal* leakSensors = nullptr;
     VibrationAdxl345* vibPodBeater = nullptr;
     VibrationAdxl345* vibPodCompressor = nullptr;
     ConfigLoader* configLoader = nullptr;

@@ -19,12 +19,24 @@ definitions and units.
 All generators are seeded (accept a `numpy.random.Generator` or an int
 seed) for reproducibility.
 
-Resolution note — `make_motor_degradation` is the one exception to "one row
-per second." Motor wear plays out over weeks, and a second-by-second
-simulation over that span is unnecessary weight for an illustrative
-example, so it samples at a coarser interval (5 minutes by default) and
-says so in its docstring and in the segment's `.notes`. Every other
-generator is 1Hz, matching `channels_YYYYMMDD.csv` on the card.
+Resolution note — `make_motor_degradation` and `make_seal_failure` are the
+exceptions to "one row per second." Both failure modes play out over weeks,
+and a second-by-second simulation over that span is unnecessary weight for
+an illustrative example, so each samples at a coarser interval (5 minutes
+by default) and says so in its docstring and in the segment's `.notes`.
+Every other generator is 1Hz, matching `channels_YYYYMMDD.csv` on the card.
+
+Leak-sensing channels note — `drip_rate_cpm` (drops/min at the machine's
+drip tube, the factory-designed telltale for rear cylinder seal wear),
+`moisture_raw` (0-1, optional under-machine moisture pad), and
+`refrigerant_raw` (0-1, optional/EXPERIMENTAL uncalibrated gas sensor) are
+appended after `hp_ok` per `docs/firmware/data-format-spec.md`'s trailing-
+column policy. Every generator here fills all three with an illustrative
+healthy baseline (near-zero drip with occasional isolated drops, ~0.05
+moisture, ~0.10 refrigerant, all with small noise) so every
+`SyntheticSegment.channels` frame stays schema-consistent regardless of
+which failure mode it illustrates; `make_seal_failure` is the one generator
+that layers an actual failure progression on top of the drip baseline.
 """
 
 from __future__ import annotations
@@ -58,11 +70,27 @@ HOLD_RANGE_HEALTHY_S = (60, 180)  # seconds, normal idle/hold between runs
 RUN_RANGE_SHORT_CYCLE_S = (20, 55)  # seconds, well under the 60s "short cycle" line
 HOLD_RANGE_SHORT_CYCLE_S = (15, 45)  # seconds
 
-_COLUMNS = [c for c in CHANNELS_COLUMNS if c != "ts_iso"]
+# Leak-sensing channels appended after hp_ok, per data-format-spec.md's
+# trailing-column policy. Not yet in loader.CHANNELS_COLUMNS (older cards
+# won't have them) -- appended here so every synthetic segment still comes
+# out schema-consistent with what current firmware produces.
+_LEAK_COLUMNS = ["drip_rate_cpm", "moisture_raw", "refrigerant_raw"]
+
+_COLUMNS = [c for c in CHANNELS_COLUMNS if c != "ts_iso"] + _LEAK_COLUMNS
 _VIB_COLUMNS = [c for c in VIB_SUMMARY_COLUMNS if c != "ts_iso"]
 
 POD_BEATER = 1
 POD_COMPRESSOR = 2
+
+# Healthy baseline for the leak-sensing channels: drip stays at/near zero
+# with only occasional isolated drops (handling, a stray splash) -- see
+# `_healthy_leak_channels`. (illustrative, not calibrated)
+DRIP_HEALTHY_ISOLATED_RANGE = (0.5, 2.5)  # cpm, magnitude of an isolated blip
+DRIP_HEALTHY_EVENT_INTERVAL_S = 90 * 60  # expected seconds between isolated blips
+MOISTURE_HEALTHY_BASELINE = 0.05
+MOISTURE_HEALTHY_NOISE_STD = 0.012
+REFRIGERANT_HEALTHY_BASELINE = 0.10  # EXPERIMENTAL sensor -- see signatures.py
+REFRIGERANT_HEALTHY_NOISE_STD = 0.02
 
 
 @dataclass
@@ -100,7 +128,43 @@ def _utc_index(
     )
 
 
-def _base_frame(index: pd.DatetimeIndex, ambient_c: float) -> pd.DataFrame:
+def _healthy_leak_channels(
+    index: pd.DatetimeIndex, rng: np.random.Generator
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Healthy-baseline `(drip_rate_cpm, moisture_raw, refrigerant_raw)`.
+
+    `drip_rate_cpm` is zero almost everywhere, with rare isolated blips
+    (a stray splash, a tech wiping the tube) -- never sustained, which is
+    exactly what distinguishes it from `make_seal_failure`'s progression.
+    `moisture_raw`/`refrigerant_raw` are flat baselines with small sensor
+    noise; both are optional/uncalibrated per data-format-spec.md, and
+    `refrigerant_raw` in particular is EXPERIMENTAL (see signatures.py).
+    """
+    n = len(index)
+    if n == 0:
+        return np.zeros(0), np.zeros(0), np.zeros(0)
+
+    freq_s = (index[1] - index[0]).total_seconds() if n > 1 else 1.0
+
+    drip = np.zeros(n)
+    event_prob = freq_s / DRIP_HEALTHY_EVENT_INTERVAL_S
+    event_mask = rng.random(n) < event_prob
+    n_events = int(event_mask.sum())
+    if n_events:
+        drip[event_mask] = rng.uniform(*DRIP_HEALTHY_ISOLATED_RANGE, size=n_events)
+
+    moisture = np.clip(
+        MOISTURE_HEALTHY_BASELINE + rng.normal(0, MOISTURE_HEALTHY_NOISE_STD, n), 0.0, 1.0
+    )
+    refrigerant = np.clip(
+        REFRIGERANT_HEALTHY_BASELINE + rng.normal(0, REFRIGERANT_HEALTHY_NOISE_STD, n), 0.0, 1.0
+    )
+    return drip, moisture, refrigerant
+
+
+def _base_frame(
+    index: pd.DatetimeIndex, ambient_c: float, rng: np.random.Generator
+) -> pd.DataFrame:
     n = len(index)
     df = pd.DataFrame(index=index, columns=_COLUMNS, dtype="float64")
     df["ts_unix_ms"] = (index.asi8 // 1000).astype("int64")
@@ -116,6 +180,10 @@ def _base_frame(index: pd.DatetimeIndex, ambient_c: float) -> pd.DataFrame:
     df["compressor_cmd"] = 0
     df["tcc_satisfied"] = 0
     df["hp_ok"] = 1
+    drip, moisture, refrigerant = _healthy_leak_channels(index, rng)
+    df["drip_rate_cpm"] = drip
+    df["moisture_raw"] = moisture
+    df["refrigerant_raw"] = refrigerant
     return df
 
 
@@ -323,7 +391,7 @@ def make_healthy(
         start = pd.Timestamp("2026-06-01T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = _cycle_windows(n_rows, RUN_RANGE_HEALTHY_S, HOLD_RANGE_HEALTHY_S, rng)
     for run_start, run_end, hold_end in windows:
@@ -368,7 +436,7 @@ def make_short_cycling(
         start = pd.Timestamp("2026-06-02T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = _cycle_windows(
         n_rows, RUN_RANGE_SHORT_CYCLE_S, HOLD_RANGE_SHORT_CYCLE_S, rng
@@ -414,7 +482,7 @@ def make_tcc_never_satisfied(
         start = pd.Timestamp("2026-06-03T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = [(0, n_rows, n_rows)]
     _fill_cycle(
@@ -459,7 +527,7 @@ def make_condenser_airflow(
         start = pd.Timestamp("2026-06-04T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = _cycle_windows(n_rows, RUN_RANGE_HEALTHY_S, HOLD_RANGE_HEALTHY_S, rng)
     for run_start, run_end, hold_end in windows:
@@ -532,7 +600,7 @@ def make_knocking(
         start = pd.Timestamp("2026-06-05T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = _cycle_windows(n_rows, RUN_RANGE_HEALTHY_S, HOLD_RANGE_HEALTHY_S, rng)
     for run_start, run_end, hold_end in windows:
@@ -633,7 +701,7 @@ def make_belt_slip(
         start = pd.Timestamp("2026-06-06T00:00:00Z")
     n_rows = int(hours * 3600)
     idx = _utc_index(n_rows, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     windows = _cycle_windows(n_rows, RUN_RANGE_HEALTHY_S, HOLD_RANGE_HEALTHY_S, rng)
     for run_start, run_end, hold_end in windows:
@@ -701,7 +769,7 @@ def make_motor_degradation(
         start = pd.Timestamp("2026-06-01T00:00:00Z")
     n_rows = int(days * 86400 / resolution_s)
     idx = _utc_index(n_rows, freq_s=resolution_s, start=start)
-    df = _base_frame(idx, ambient_c)
+    df = _base_frame(idx, ambient_c, rng)
 
     # Run/hold ranges rescaled into "rows of resolution_s seconds" so the
     # duty cycle still looks like intermittent service use rather than
@@ -752,5 +820,97 @@ def make_motor_degradation(
             f"drifts upward ~{slope_per_day:.3f}A/day, from the healthy "
             f"2.5-3.5A baseline toward +{end_drift:.1f}A by the end of the "
             "segment."
+        ),
+    )
+
+
+# --- leak / seal-wear baseline -----------------------------------------
+
+# Drip rate reached by the end of a `make_seal_failure` deployment, drops
+# per minute (illustrative -- not calibrated to a real worn seal).
+SEAL_FAILURE_END_DRIP_CPM = (10.0, 16.0)
+
+
+def make_seal_failure(
+    days: int = 21,
+    rng: np.random.Generator | int | None = None,
+    start: pd.Timestamp | None = None,
+    ambient_c: float = AMBIENT_C_DEFAULT,
+    resolution_s: int = 300,
+) -> SyntheticSegment:
+    """Gradual rear-cylinder seal wear, read from the drip tube.
+
+    RESOLUTION NOTE: like `make_motor_degradation`, this does *not* produce
+    one row per second. Seal wear plays out over weeks, so this samples at
+    `resolution_s` (default 300s = 5 min) instead -- see
+    `make_motor_degradation`'s docstring for the same rationale.
+    `detect_seal_failure` works on a rolling window and daily medians, so
+    this resolution doesn't lose the signal it needs.
+
+    Simulated failure: everything stays healthy -- normal 4-8 minute
+    freeze-down cycling, healthy currents, healthy condenser/discharge
+    temps, TCC satisfying normally -- except `drip_rate_cpm`. It starts at
+    the same near-zero, occasional-isolated-drop baseline every other
+    generator produces, then a day-indexed sustained climb is layered on
+    top: early in the deployment it still looks like isolated blips, but by
+    the back half of the window the drip rate is continuously present and
+    climbing, reaching `SEAL_FAILURE_END_DRIP_CPM` drops/min by the end --
+    the rear seal wearing through, not a one-off splash.
+    """
+    rng = _rng(rng)
+    if start is None:
+        start = pd.Timestamp("2026-06-01T00:00:00Z")
+    n_rows = int(days * 86400 / resolution_s)
+    idx = _utc_index(n_rows, freq_s=resolution_s, start=start)
+    df = _base_frame(idx, ambient_c, rng)
+
+    # Run/hold ranges rescaled into "rows of resolution_s seconds," same
+    # approach as make_motor_degradation, so the duty cycle still looks
+    # like intermittent service use rather than always-on.
+    run_range_rows = (
+        RUN_RANGE_HEALTHY_S[0] / resolution_s,
+        RUN_RANGE_HEALTHY_S[1] / resolution_s * 3,
+    )
+    hold_range_rows = (
+        HOLD_RANGE_HEALTHY_S[0] / resolution_s,
+        HOLD_RANGE_HEALTHY_S[1] / resolution_s * 3,
+    )
+    windows = _cycle_windows(n_rows, run_range_rows, hold_range_rows, rng)
+    for run_start, run_end, hold_end in windows:
+        _fill_cycle(
+            df,
+            rng,
+            run_start,
+            run_end,
+            hold_end,
+            ambient_c=ambient_c,
+            beater_current_range=BEATER_LOADED_RANGE,
+            compressor_current_range=COMPRESSOR_RUN_RANGE,
+            cond_delta_range=COND_DELTA_HEALTHY,
+            discharge_range=DISCHARGE_HEALTHY,
+        )
+
+    # Day-indexed sustained climb layered on top of the near-zero healthy
+    # drip baseline already in df["drip_rate_cpm"] from _base_frame.
+    day_index = (np.arange(n_rows) * resolution_s) // 86400
+    end_rate = rng.uniform(*SEAL_FAILURE_END_DRIP_CPM)
+    slope_per_day = end_rate / max(days - 1, 1)
+    sustained = day_index * slope_per_day
+    noise = rng.normal(0, 0.4, n_rows)
+    drip = df["drip_rate_cpm"].to_numpy() + sustained + noise
+    df["drip_rate_cpm"] = np.clip(drip, 0.0, None)
+
+    vib = _make_vib_summary(n_rows, start, windows, rng, interval_s=resolution_s)
+    return SyntheticSegment(
+        label="seal_failure",
+        channels=df,
+        vib_summary=vib,
+        notes=(
+            f"Sampled at {resolution_s}s resolution (not 1Hz -- see "
+            f"docstring) across {days} days. Cycling, currents, and "
+            f"temperatures stay healthy throughout; drip_rate_cpm climbs "
+            f"~{slope_per_day:.2f} drops/min/day from a near-zero, "
+            f"isolated-blip baseline toward ~{end_rate:.1f} drops/min "
+            "sustained by the end of the segment."
         ),
     )

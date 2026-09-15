@@ -16,3 +16,4 @@ gpio,function,bus,direction,notes
 16,AC-presence 2: 24V contactor coil,digital,input,opto module TTL output; bench-verify threshold before deployment (see bom.md risks)
 17,AC-presence 3: TCC microswitch node,digital,input,optional; opto module TTL output; pulls to 3.3V when energized
 18,AC-presence 4: HP switch node,digital,input,optional; opto module TTL output; pulls to 3.3V when energized
+21,DRIP_PULSE: drip tube drop counter,digital,input,IR slot-type optical drop counter at drip tube outlet; debounced pulse counting in firmware; base config leak sensing

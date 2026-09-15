@@ -34,6 +34,10 @@ placement logic — only the differences below apply. Read
   (F0661) — only the transformer part number differs (F4997 vs F4995), which
   has no bearing on install steps.
 - CT clamp placement logic (one conductor per clamp) is unchanged.
+- The leak-sensing kit (drip-tube drop counter, plus the optional moisture
+  pad / gas sensor add-ons) installs identically — confirm the drip tube's
+  exact location on this cabinet on-site before clipping the drop counter
+  on.
 
 ## What needs on-site judgment
 
@@ -49,7 +53,7 @@ placement logic — only the differences below apply. Read
    dominant vibration axes at that mount point may not map 1:1 onto the
    137A's X/Y/Z convention — note the actual mounting orientation in
    `config.json`/`channel_map` (see
-   [137A.md § 8](137A.md#8-record-the-channel-map)) so analysis can
+   [137A.md § 9](137A.md#9-record-the-channel-map)) so analysis can
    correctly interpret axis data for 127A installs.
 2. **Condenser air-in probe location is different, not just relocated —
    check that skirts are installed first.** The 127A draws condenser air
@@ -78,9 +82,10 @@ placement logic — only the differences below apply. Read
 
 Follow [137A.md](137A.md) steps 1 (bench provisioning), 3 (CT install), 6
 (temperature probes — same targets except condenser air-in per above), 7
-(cable routing), 8 (record channel map), 9 (close-up/verify — including
-confirming skirts are in place, not just side/rear clearance), 10
-(journaling sticker/briefing), and 11 (pickup) as written. The
+(leak-sensing add-ons), 8 (cable routing), 9 (record channel map), 10
+(close-up/verify — including confirming skirts are in place, not just
+side/rear clearance), 11 (journaling sticker/briefing), and 12 (pickup) as
+written. The
 [expected-signals table](137A.md#expected-signals-on-a-healthy-machine) in
 the 137A guide is a reasonable starting baseline for the 127A too, but has
 **not** been validated against a real 127A yet — treat it as provisional

@@ -320,6 +320,57 @@ def chart_motor_degradation() -> str:
     return fig_to_base64(fig)
 
 
+# --- 7. seal failure (leak) -------------------------------------------------
+
+
+def chart_seal_failure() -> str:
+    healthy = syn.make_healthy(hours=504.0, rng=1601)  # 21 days at 1Hz
+    failing = syn.make_seal_failure(days=21, rng=1602)
+
+    def daily_max_drip(channels):
+        s = channels["drip_rate_cpm"].dropna()
+        return s.groupby(s.index.normalize()).max()
+
+    dh = daily_max_drip(healthy.channels)
+    df_ = daily_max_drip(failing.channels)
+
+    fig, ax = plt.subplots(figsize=(7.6, 3.6), facecolor=CHART_SURFACE)
+    ax.plot(
+        range(len(dh)), dh.to_numpy(), color=HEALTHY_COLOR, linewidth=LINEWIDTH,
+        marker="o", markersize=4.5, label="Healthy — occasional isolated drops",
+    )
+    ax.plot(
+        range(len(df_)), df_.to_numpy(), color=FAIL_COLOR, linewidth=LINEWIDTH,
+        marker="o", markersize=4.5, label="Worn rear seal — steady climb",
+    )
+    style_axes(ax)
+    ax.set_xlabel("day of deployment")
+    ax.set_ylabel("drip rate at the drip tube,\nbusiest reading per day (drops/min)")
+    legend_above(ax)
+
+    healthy_pick = min(len(dh) - 2, len(dh) - 1)
+    ax.annotate(
+        "A drop here, a drop there --\nnever adds up to a trend",
+        xy=(healthy_pick, float(dh.iloc[healthy_pick])),
+        xytext=(max(healthy_pick - 9, 0), float(dh.max()) + 3.0),
+        fontsize=8.5,
+        color=INK_PRIMARY,
+        arrowprops=dict(arrowstyle="->", color=INK_SECONDARY, linewidth=1.2),
+        bbox=dict(boxstyle="round,pad=0.35", facecolor="white", edgecolor=AXIS_BASELINE),
+    )
+    last = len(df_) - 1
+    ax.annotate(
+        f"Up to {df_.iloc[-1]:.0f} drops/min and\nstill climbing -- not a one-off",
+        xy=(last, float(df_.iloc[-1])),
+        xytext=(last - 10, float(df_.iloc[-1]) - 4.5),
+        fontsize=8.5,
+        color=INK_PRIMARY,
+        arrowprops=dict(arrowstyle="->", color=INK_SECONDARY, linewidth=1.2),
+        bbox=dict(boxstyle="round,pad=0.35", facecolor="white", edgecolor=AXIS_BASELINE),
+    )
+    return fig_to_base64(fig)
+
+
 # --- assemble HTML -----------------------------------------------------
 
 SECTIONS = [
@@ -405,6 +456,23 @@ SECTIONS = [
         "chart_fn": chart_motor_degradation,
         "recommend": "Plan a motor replacement at the next scheduled service, before it "
         "fails unexpectedly -- a planned swap is far cheaper than an emergency one.",
+    },
+    {
+        "id": "seal-failure",
+        "name": "Leaking rear seal — the drip that tells you before the puddle does",
+        "subtitle": "A slow drip from the drip tube, building over weeks into something you can't ignore",
+        "experience": (
+            "You'd notice drips from the tube under the faceplate, a bit of mix or "
+            "refrigerant residue on the floor under the machine, and eventually product "
+            "loss as the rear cylinder seal wears through. It rarely starts as a puddle "
+            "-- it starts as an occasional drop that's easy to wipe up and forget about, "
+            "and only becomes obvious once it's already a steady leak."
+        ),
+        "chart_fn": chart_seal_failure,
+        "recommend": "Schedule an inexpensive seal kit replacement at the machine's next "
+        "scheduled service. This is a wear item and is not covered by the machine's "
+        "warranty -- which is exactly why catching it early, before it turns into a "
+        "bigger repair, matters.",
     },
 ]
 
@@ -537,7 +605,7 @@ def build_html() -> str:
   <header class="doc-header">
     <h1>What failure looks like in the data — FrostSight signature gallery</h1>
     <p class="subtitle">
-      Six ways a Frosty Factory machine tells you something's wrong, if you know
+      Seven ways a Frosty Factory machine tells you something's wrong, if you know
       where to look. Each chart below compares a healthy machine against a
       documented failure mode over the same kind of stretch of time.
     </p>

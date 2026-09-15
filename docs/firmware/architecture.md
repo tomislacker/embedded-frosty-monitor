@@ -70,6 +70,10 @@ A 1Hz loop that is the source of the channel CSV row and the trigger logic:
   MAX31855 thermocouple.
 - Reads digital control-state (AC-presence inputs; see the edge-counting
   constraint below).
+- Reads the leak-sensing HAL: drip-tube drop rate (see
+  [Drip-rate pulse counting](#drip-rate-pulse-counting-not-raw-pulses) below)
+  plus the two optional ADS1115 add-on channels (moisture pad, refrigerant
+  gas sensor).
 - Emits exactly one `ChannelRow` record per second onto the FreeRTOS record
   queue.
 - Evaluates trigger conditions — e.g., a compressor-start current spike —
@@ -156,6 +160,23 @@ threshold (a live 60Hz line produces roughly 12 edges in 100ms; near-zero
 edges means the node is not energized). This is implemented as a HAL-level
 concern so `SamplingSchedulerTask` only ever sees a debounced boolean state,
 never raw pulses.
+
+### Drip-rate pulse counting, not raw pulses
+
+The drip-tube IR slot sensor (`pins::DRIP_PULSE`) outputs one pulse per drop,
+directly analogous to the AC-presence opto pulse trains above but at a much
+lower, irregular rate driven by drip physics rather than line frequency. A
+single instantaneous "is there a pulse right now" read is meaningless for
+trending a leak; instead the `leak_sensors` HAL counts drops in a rolling
+window (30s) and reports a normalized drips-per-minute rate, the same
+windowed-counting shape as `digital_input`'s edge counting, just with a much
+longer window and no active/inactive threshold — the count itself is the
+signal. This is implemented as `DripRateMonitor`, real logic (not stubbed)
+unit tested the same way `DigitalInputMonitor` is; only the drop *source* is
+stubbed for M0. The two optional ADS1115 add-on channels (moisture pad,
+refrigerant gas sensor) are read by the same HAL but have no windowing —
+each 1Hz tick just takes the latest normalized reading, or `NAN` if the
+add-on is configured absent.
 
 ### SPI bus sharing: SD and MAX31855
 
@@ -254,6 +275,7 @@ assignments, for quick reference while reading this document:
 | MAX31855 chip select | GPIO 14 |
 | 1-Wire (DS18B20 chain) | GPIO 4 |
 | AC-presence opto inputs | GPIO 15/16/17/18 |
+| Drip-tube IR pulse (leak detection) | GPIO 21 |
 | Buttons | GPIO 6/7 |
 | Status LEDs | GPIO 1/2/5 |
 

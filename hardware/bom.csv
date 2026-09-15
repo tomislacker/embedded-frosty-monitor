@@ -20,6 +20,7 @@ consumable,K-type thermocouple probe >=200C washer/compression style,1,10.00,10.
 consumable,AC-presence optocoupler module (isolated TTL out),2,2.50,5.00,voltage sensing,120V beater leg + 24V contactor coil; bench-verify 24V threshold
 consumable,Pod mini-enclosure + mounting (epoxy stud/adhesive),2,3.00,6.00,pod housing,sealed potted electronics + strain-relieved cable
 consumable,Misc heat-shrink epoxy kapton tape zip ties,1,5.00,5.00,assembly aids,cable dressing conformal protection (optional)
+consumable,IR slot-type optical drop counter,1,4.00,4.00,leak sensing,drip tube outlet; quantitative drip rate; pulse output to GPIO21; debounced in firmware
 optional,3rd SCT-013-020 CT,1,6.00,6.00,current sensing,whole-machine draw measurement
 optional,TCC-microswitch + HP-switch opto taps (2 modules),1,5.00,5.00,voltage sensing,state machine monitoring
 optional,Hopper DS18B20 probe,1,3.50,3.50,temperature sensing,product temperature tracking during fill cycles
@@ -28,3 +29,6 @@ optional,GX16 aviation bulkhead connector upgrade x7,1,17.50,17.50,connectors,fi
 optional,Conformal coating spray can,1,20.00,20.00,assembly aids,amortized across multiple builds; optional moisture/grease barrier for core board
 optional,Spare pod kit (ADXL345 + mini-enclosure + pigtail),1,15.00,15.00,consumable spare,swap contaminated pod in <5 min without field rework
 optional,RS-485 fallback parts: 2x Seeed XIAO RP2040 + 4x MAX485 module,1,16.80,16.80,signal conditioning,in-pod digital bridge if I2C pod cable runs prove fundamentally unreliable
+optional,Capacitive moisture pad (soil-moisture style),1,5.00,5.00,leak sensing,under-machine/drip-tray pooling detection; ADS1115 channel A2; capacitive not resistive - resists corrosion in sugary spills
+optional,Refrigerant gas-sensor module (experimental),1,12.00,12.00,leak sensing,compressor compartment mounted low; ADS1115 channel A3; heater from 5V rail; bench-validate before trusting readings - see bom.md risks
+optional,Leak-kit cabling/JST connectors,1,4.00,4.00,leak sensing,detach pigtails for drop counter/moisture pad/gas sensor add-ons

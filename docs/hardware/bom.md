@@ -2,7 +2,7 @@
 
 ## Configuration Philosophy
 
-The base configuration targets **reusable logger core + consumable sensor pods** ($130–150 total). This split reflects the actual deployment lifecycle: the main enclosure lives outside the machine for months, while sensor pods contaminate with grease/sugar and require periodic replacement.
+The base configuration targets **reusable logger core + consumable sensor pods** ($130–155 total). This split reflects the actual deployment lifecycle: the main enclosure lives outside the machine for months, while sensor pods contaminate with grease/sugar and require periodic replacement.
 
 Budget generic sourcing (AliExpress/Amazon clones) keeps sacrificial parts within reach of frequent replacement; name-brand alternates (Adafruit) are noted per line for reliability-critical spots (RTC, MAX31855 thermocouple amp, ADS1115 ADC). Optional add-ons extend capability without inflating the base cost.
 
@@ -41,7 +41,8 @@ Budget generic sourcing (AliExpress/Amazon clones) keeps sacrificial parts withi
 | AC-presence optocoupler module (isolated, TTL out) | 2 | 2.50 | 5.00 | voltage sensing | 120V beater leg + 24V contactor coil; **bench-verify 24V threshold** (see risks below) |
 | Pod mini-enclosure + mounting (epoxy stud/adhesive) | 2 | 3.00 | 6.00 | pod housing | sealed, potted electronics + strain-relieved cable |
 | Misc: heat-shrink, epoxy, kapton tape, zip ties | 1 | 5.00 | 5.00 | assembly aids | cable dressing, conformal protection (optional) |
-| **Consumable Subtotal** | | | **$70.00** | | |
+| IR slot-type optical drop counter | 1 | 4.00 | 4.00 | leak sensing | drip tube outlet; quantitative drip rate; digital pulse to GPIO 21 (DRIP_PULSE); see leak-sensing risks below |
+| **Consumable Subtotal** | | | **$74.00** | | |
 
 ---
 
@@ -50,10 +51,10 @@ Budget generic sourcing (AliExpress/Amazon clones) keeps sacrificial parts withi
 | | |
 |------|------|
 | Core subtotal | $78.60 |
-| Consumable subtotal | $70.00 |
-| **Base Total** | **$148.60** |
+| Consumable subtotal | $74.00 |
+| **Base Total** | **$152.60** |
 
-**Status:** Target band $130–150 ✓ (lands at $148.60)
+**Status:** Target band $130–155 ✓ (lands at $152.60, up from $148.60). The $2.60 move past the original $130–150 band was accepted deliberately, to fold direct rear-seal leak detection (the drop counter) into the base kit instead of treating it as an add-on — see [Configuration Philosophy](#configuration-philosophy) above.
 
 ---
 
@@ -71,6 +72,9 @@ Purchase these only if bench testing or deployment experience calls for addition
 | Conformal coating spray can | +$20.00 | amortized across multiple builds; optional moisture/grease barrier for core board |
 | Spare pod kit (ADXL345 + mini-enclosure + pigtail) | +$15.00 | swap contaminated pod in <5 min without field rework |
 | RS-485 fallback parts: 2× Seeed XIAO RP2040 + 4× MAX485 module | +$16.80 | in-pod digital bridge if I2C pod cable runs prove fundamentally unreliable after bench test; not recommended unless P82B715 buffering fails |
+| Capacitive moisture pad | +$5.00 | under-machine/drip-tray pooling detection, separate from the drip-tube drop counter; analog out to ADS1115 channel A2; capacitive (not resistive) construction — see risks below |
+| Refrigerant gas-sensor module (**experimental**) | +$12.00 | semiconductor gas sensor mounted low in the compressor compartment; analog out to ADS1115 channel A3, heater from 5V rail; **bench-validate before trusting readings** — see risks below |
+| Leak-kit cabling/JST connectors | +$4.00 | detach pigtails for the moisture pad and/or gas-sensor add-ons |
 
 ---
 
@@ -111,6 +115,14 @@ The ESP32-S3's built-in ADC exhibits documented noise up to ~250 mV under load (
 ### (d) No Affordable High-Fidelity Vibration Alternative
 
 The ADXL345 is a mature, low-cost MEMS accelerometer. No affordable ADXL355 breakout (10× better noise floor) exists at <$20. If vibration resolution becomes critical, custom PCB or module integration is required—outside the scope of this no-PCB-fab constraint.
+
+### (e) Refrigerant Gas-Sensor Module — Experimental, Uncalibrated
+
+The optional semiconductor gas-sensor module is **experimental**. Cheap MOS-type gas sensors drift over weeks to months, cross-react with other vapors (cleaning chemicals, ambient VOCs), and are prone to false alarms without per-unit calibration against a known refrigerant concentration.
+
+**Do not present this channel's data to a customer as a diagnostic conclusion until it has been bench-validated** against a controlled refrigerant-vapor source. Until then, the primary refrigerant-loss detection path stays the indirect signature already covered elsewhere in this project — compressor short-cycling plus reduced condenser ΔT (see [roadmap.md](../roadmap.md)). This sensor does not carry any EPA leak-inspection compliance angle: those mandates apply to systems with ≥50 lbs of refrigerant charge, far above what these machines hold, and nothing here should be represented as meeting a regulatory requirement.
+
+**Why capacitive, not resistive, for the moisture pad:** resistive moisture sensors measure conductivity between two exposed electrodes, which corrodes and drifts quickly in a sugary, conductive-spill environment — exactly what this application sees. The capacitive soil-moisture-style pad has no exposed corroding electrode pair and is the right choice here despite the modest cost premium over resistive alternatives.
 
 ---
 

@@ -31,6 +31,9 @@ and control chain were actually doing.
 - Logs four to five temperatures (cylinder jacket, condenser air in/out,
   ambient, optional hopper) plus compressor discharge line temperature via
   thermocouple.
+- Logs drip rate at the drip tube outlet via an optical drop counter — a
+  direct, quantitative read on rear cylinder seal wear — plus optional
+  under-machine moisture and refrigerant-gas-sensor add-ons.
 - Logs digital AC-presence state on the beater leg and the 24VAC contactor
   coil, so control-chain behavior (is the compressor actually trying to run)
   is visible alongside the analog channels.

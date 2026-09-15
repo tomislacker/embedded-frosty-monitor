@@ -19,6 +19,7 @@ void taskFn(void* pv) {
     for (;;) {
         const uint32_t nowMillis = millis();
         ctx->digitalInput->tickStub(nowMillis);
+        ctx->leakSensors->tickStub(nowMillis);
 
         const bool beaterOn = ctx->digitalInput->isActive(DigitalInputChannel::Beater);
         const bool compressorCmd = ctx->digitalInput->isActive(DigitalInputChannel::Contactor);
@@ -43,6 +44,9 @@ void taskFn(void* pv) {
         row.compressor_cmd = compressorCmd;
         row.tcc_satisfied = tccSatisfied;
         row.hp_ok = hpOk;
+        row.drip_rate_cpm = ctx->leakSensors->dripRateCpm();
+        row.moisture_raw = ctx->leakSensors->moistureRaw();
+        row.refrigerant_raw = ctx->leakSensors->refrigerantRaw();
 
         SampleRecord rec;
         rec.type = RecordType::ChannelRow;

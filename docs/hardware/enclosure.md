@@ -184,6 +184,20 @@ Probe leads are typically **red/yellow or red/blue (K-type standard)**. Polarity
 
 ---
 
+## Leak-Sensing Add-Ons: Drop Counter, Moisture Pad, Gas Sensor
+
+Leak sensing spans one base-config sensor (the drop counter) and two optional add-ons (moisture pad, gas sensor). All three mount as consumable-class pods on JST detach pigtails, the same discipline as the vibration pods and temperature probes above.
+
+**Drop counter (base config):** Clips onto the drip tube outlet below the faceplate — the machine's factory-designed rear-seal telltale. **The tube must still drain freely; never plug or restrict it to fit the sensor.** The IR slot-type sensor straddles the drip path without narrowing it; after mounting, verify clear drainage, not just electrical function.
+
+**Moisture pad (optional):** Placed under the drip tray / machine footprint to catch pooling the drop counter wouldn't see (spray, overflow, non-drip-tube leaks). Route the pigtail clear of foot traffic and any spot where a tech would step or roll equipment.
+
+**Gas-sensor pod (optional, experimental):** Mounted low in the compressor compartment — refrigerant vapors are heavier than air — and positioned away from the direct condenser airflow blast, which would dilute or skew a reading before the sensor gets a representative sample.
+
+All three use JST-SM detach pigtails, same as the vibration pods, so they can be unplugged for service or panel removal without disturbing the rest of the wiring.
+
+---
+
 ## Contamination Strategy & Maintenance
 
 ### Sacrificial Parts Model

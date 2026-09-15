@@ -27,6 +27,7 @@ CurrentSensorAds1115 g_currentSensor;
 TempDs18b20 g_tempDs18b20;
 ThermocoupleMax31855 g_thermocouple;
 DigitalInputHal g_digitalInput;
+LeakSensorsHal g_leakSensors;
 VibrationAdxl345 g_vibPodBeater(1, i2c_addr::ADXL345_POD_A);
 VibrationAdxl345 g_vibPodCompressor(2, i2c_addr::ADXL345_POD_B);
 ConfigLoader g_configLoader(&g_sink);
@@ -64,6 +65,7 @@ void setup() {
     g_tempDs18b20.begin();
     g_thermocouple.begin();
     g_digitalInput.begin();
+    g_leakSensors.begin();
     g_vibPodBeater.begin();
     g_vibPodCompressor.begin();
 
@@ -81,6 +83,7 @@ void setup() {
     g_ctx.tempDs18b20 = &g_tempDs18b20;
     g_ctx.thermocouple = &g_thermocouple;
     g_ctx.digitalInput = &g_digitalInput;
+    g_ctx.leakSensors = &g_leakSensors;
     g_ctx.vibPodBeater = &g_vibPodBeater;
     g_ctx.vibPodCompressor = &g_vibPodCompressor;
     g_ctx.configLoader = &g_configLoader;

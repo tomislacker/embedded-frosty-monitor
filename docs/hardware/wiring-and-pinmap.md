@@ -37,7 +37,8 @@ Reserve these GPIO pins for internal functions. Using them will cause boot failu
 | 16 | AC-presence 2: 24V contactor coil | digital | input | — | opto module TTL output; **bench-verify threshold before deployment** (see bom.md risks) |
 | 17 | AC-presence 3: TCC microswitch node | digital | input | — | optional; opto module TTL output; pulls to 3.3V when energized |
 | 18 | AC-presence 4: HP switch node | digital | input | — | optional; opto module TTL output; pulls to 3.3V when energized |
-| 21, 38, 39, 40, 41, 42, 47 | Spare | — | — | — | available for future expansion |
+| 21 | DRIP_PULSE: drip tube drop counter | digital | input | — | IR slot-type optical drop counter clipped at the drip tube outlet (rear-seal telltale below the faceplate); debounced pulse counting in firmware; **base config** — see bom.md leak-sensing notes |
+| 38, 39, 40, 41, 42, 47 | Spare | — | — | — | available for future expansion |
 | 48 | RGB LED (onboard DevKitC-1) | SPI | output | — | WS2812B protocol; can be repurposed if RGB status not needed |
 
 ---
@@ -48,10 +49,19 @@ Reserve these GPIO pins for internal functions. Using them will cause boot failu
 
 | Module | I2C Address | Function | Role |
 |--------|-------------|----------|------|
-| ADS1115 (16-bit ADC) | 0x48 | CT bias voltage + thermocouple reference | **mandatory**; see bom.md risk (c) |
+| ADS1115 (16-bit ADC) | 0x48 | CT bias voltage + optional leak-sensing analog channels | **mandatory**; see bom.md risk (c) |
 | DS3231 (RTC) | 0x68 | system clock + NVRAM (EEPROM optional at 0x57) | low-power timekeeping across SD card writes |
 | ADXL345 pod A (beater drive vibration) | 0x1D | ALT ADDRESS pin tied HIGH | breakout onboard pull-up + this GPIO config |
 | ADXL345 pod B (compressor shell vibration) | 0x53 | ALT ADDRESS pin LOW/grounded | breakout onboard pull-up + this GPIO config |
+
+### ADS1115 Analog Channel Map
+
+| Channel | Signal | Notes |
+|---------|--------|-------|
+| A0 | CT-1: beater-motor leg (biased/filtered) | see CT Bias Network below |
+| A1 | CT-2: compressor leg (biased/filtered) | see CT Bias Network below |
+| A2 | Moisture pad (**optional add-on**) | capacitive soil-moisture-style pad; under-machine/drip-tray pooling detection; see bom.md optional add-ons |
+| A3 | Refrigerant gas sensor (**optional, experimental add-on**) | semiconductor gas-sensor module, mounted low in the compressor compartment; heater powered from the 5V rail; **bench-validate before trusting readings** — see bom.md risk (e) |
 
 ### Pull-Up Resistor Note
 
@@ -193,7 +203,8 @@ Firmware reads the ADC and computes RMS current: `I_rms = (ADC_reading_AC / 3.3V
 - [ ] Button pins (GPIO 6, 7) pulled high via internal pull-ups; momentary switches connect to GND.
 - [ ] LED pins (GPIO 1, 2, 5) each have a 1 kΩ current-limit resistor in series to ground; active-high sourcing from GPIO.
 - [ ] AC-presence opto modules wired: AC/DC input from machine, 3.3V/GND power, TTL output to GPIO 15/16/17/18.
-- [ ] CT coils wired to bias network; output into ADS1115 analog channels.
+- [ ] CT coils wired to bias network; output into ADS1115 channels A0/A1.
+- [ ] Drop counter (base config) wired to GPIO 21 (DRIP_PULSE); optional moisture pad wired to ADS1115 channel A2 and/or gas sensor to channel A3 if installed (see bom.md risk (e) before trusting gas-sensor readings).
 - [ ] Shielded Cat5e cables connect sensor pods to logger enclosure, terminated with JST-SM connectors.
 - [ ] Pod ADXL345 modules ALT ADDRESS pins strapped correctly: pod A (beater) HIGH (0x1D), pod B (compressor) LOW (0x53).
 - [ ] All logic-level signals isolated from AC 120V beater leg and 24V contactor coil via optocouplers (not direct GPIO).

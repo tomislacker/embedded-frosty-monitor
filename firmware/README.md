@@ -24,16 +24,17 @@ above).
 
 ### Native unit tests
 
-Pure-logic modules (CSV/JSON/binary formatting, the ring buffer, and the
-digital-input windowed-detection logic) have no Arduino dependency and are
-unit tested on the host:
+Pure-logic modules (CSV/JSON/binary formatting, the ring buffer, the
+digital-input windowed-detection logic, and the leak-sensor drip-rate
+rolling-window logic) have no Arduino dependency and are unit tested on the
+host:
 
 ```sh
 cd firmware
 pio test -e native
 ```
 
-This was run in the environment that produced this skeleton and passed (13
+This was run in the environment that produced this skeleton and passed (20
 test cases). If your host toolchain can't build the `native` platform (e.g.
 no gcc/g++ available), the `esp32-s3-devkitc-1` build above is the load-
 bearing one -- native is a convenience for fast local iteration on
@@ -64,6 +65,7 @@ microSD card.
 | `hal/temp_ds18b20` | Cylinder/cond-in/cond-out/ambient wander slowly around plausible values; hopper channel always returns NAN (models an unpopulated probe) | OneWire + DallasTemperature enumeration on `pins::ONEWIRE_BUS` |
 | `hal/temp_thermocouple_max31855` | Wanders 75-95C when the (stub) compressor is "on", relaxes toward ambient when off | MAX31855 SPI frame decode on `pins::MAX31855_CS`, fault-bit surfacing via `healthy()` |
 | `hal/digital_input` | `DigitalInputMonitor` (the windowed edge-count detector) is **real, unit-tested logic**, not stubbed. Only the edge *source* is fake: `DigitalInputHal::tickStub()` synthesizes a per-channel duty-cycle pulse train | GPIO ISRs on `ACSENSE_*` pins call `DigitalInputMonitor::recordEdge()` directly; detection logic unchanged |
+| `hal/leak_sensors` | `DripRateMonitor` (the rolling-window drops-per-minute counter) is **real, unit-tested logic**, not stubbed. Only the drop *source* is fake: `LeakSensorsHal::tickStub()` synthesizes occasional drops; moisture/refrigerant reads wander around plausible low values (or return `NAN` if `set{Moisture,Refrigerant}Present(false)`) | GPIO ISR on `pins::DRIP_PULSE` calls `DripRateMonitor::recordDrop()` directly (rate logic unchanged); real ADS1115 single-ended reads on `ads1115_channel::MOISTURE_PAD`/`REFRIGERANT_GAS` |
 | `hal/rtc_ds3231` | Wraps libc `time()`/`settimeofday()`; seeds a fixed time if the clock looks unset (pre-2023) | DS3231 I2C read/write (`i2c_addr::DS3231`), used to discipline the system clock at boot |
 
 Adafruit sensor libraries are **deliberately not** a dependency yet -- the
@@ -98,7 +100,14 @@ band energy via `esp-dsp` is M1 scope.
    `DigitalInputMonitor::recordEdge(channel, millis())`. The windowed
    detection logic (`DigitalInputMonitor::isActive`) does not change and is
    already unit tested in `test/test_native/test_main.cpp`.
-6. Run `pio test -e native` (still green -- you shouldn't have touched
+6. Leak sensors specifically: swap `LeakSensorsHal`'s stub tick loop for a
+   real `attachInterrupt()` ISR on `pins::DRIP_PULSE` that calls
+   `DripRateMonitor::recordDrop(millis())`, and replace `moistureRaw()`/
+   `refrigerantRaw()` with real ADS1115 single-ended reads on
+   `ads1115_channel::MOISTURE_PAD`/`REFRIGERANT_GAS`. The rolling-window rate
+   logic (`DripRateMonitor::dripsPerMinute`) does not change and is already
+   unit tested in `test/test_native/test_main.cpp`.
+7. Run `pio test -e native` (still green -- you shouldn't have touched
    anything it covers) and `pio run -e esp32-s3-devkitc-1` (build), then
    bench-verify against the real sensor.
 
@@ -109,7 +118,10 @@ Arduino headers, unit tested natively) and written to disk by
 `src/storage/sd_sink.cpp`.
 
 - `channels_YYYYMMDD.csv` -- 1 row/second. Header:
-  `ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,tcc_satisfied,hp_ok`
+  `ts_iso,ts_unix_ms,current_beater_a,current_compressor_a,temp_cylinder_c,temp_cond_in_c,temp_cond_out_c,temp_ambient_c,temp_hopper_c,temp_discharge_c,beater_on,compressor_cmd,tcc_satisfied,hp_ok,drip_rate_cpm,moisture_raw,refrigerant_raw`
+  (the last three columns -- `drip_rate_cpm`, `moisture_raw`,
+  `refrigerant_raw` -- are a v1.1 non-breaking addition; see
+  [docs/firmware/data-format-spec.md](../docs/firmware/data-format-spec.md#v11-additions))
   Floats are plain decimal (`%.3f`); NaN/missing -> empty field; bools are
   `0`/`1`; `ts_iso` is UTC ISO-8601.
 - `vibration/vib_summary_YYYYMMDD.csv` -- one row per vibration capture.

@@ -30,6 +30,11 @@ food-product zone, or anywhere it could fall, drop, or work loose into
 product. Cable runs and pod mounting points are chosen and secured with
 that constraint first, sensor placement quality second.
 
+Leak sensors carry the same constraint plus one of their own: the drop
+counter must never obstruct or restrict the drip tube's drain path, and the
+moisture pad and its cabling must not create a trip or snag hazard for
+anyone working under or around the machine.
+
 ## Airflow
 
 Do not mount anything, or route any cable, in a way that obstructs

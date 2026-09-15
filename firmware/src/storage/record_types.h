@@ -31,6 +31,9 @@ struct ChannelRow {
     bool compressor_cmd = false;
     bool tcc_satisfied = false;
     bool hp_ok = false;
+    float drip_rate_cpm = 0.0f;    // drops/minute, rolling window (hal/leak_sensors.h)
+    float moisture_raw = 0.0f;     // 0.0-1.0 normalized, uncalibrated; NAN if pad absent
+    float refrigerant_raw = 0.0f;  // 0.0-1.0 normalized, uncalibrated, EXPERIMENTAL; NAN if sensor absent
 };
 
 // One row of vibration/vib_summary_YYYYMMDD.csv, emitted every capture.
