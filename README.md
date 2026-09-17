@@ -76,6 +76,7 @@ the tier structure.
 | [`docs/install-guides/`](docs/install-guides/137A.md) | install-guide docs | Per-model install procedures (117A/127A/137A) |
 | `firmware/` | firmware team | PlatformIO project: FreeRTOS tasks, drivers, storage sinks |
 | `hardware/` | hardware team | Schematics, enclosure files, BOM source |
+| [`pcb/guard/`](pcb/guard/README.md) | PCB (experimental) | Guard tier custom PCB: SKiDL schematic, scripted layout/DRC, agent-driven design experiment -- unreviewed draft, not fab-ready |
 | `analysis/` | analysis team | Offline Python analysis pipeline and tests |
 
 ## Quickstart

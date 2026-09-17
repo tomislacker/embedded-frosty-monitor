@@ -1,0 +1,33 @@
+Designators,Qty,Value,Footprint,LCSC Part # (estimate unless noted),Unit Price USD (est.),Ext. Price USD (est.),Notes
+U1,1,ESP32-C3-MINI-1,RF_Module:ESP32-C3-MINI-1 (schematic uses ESP32-C3-WROOM-02 stand-in -- see README),C2934569,1.85,1.85,"Pre-certified module, onboard PCB antenna. Real MINI-1 footprint not in stock KiCad libs -- see README limitations."
+J1,1,USB-C receptacle 16P,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,C165948,0.12,0.12,5V/USB2.0 only; no PD IC
+U2,1,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,C2827654,0.06,0.06,USB ESD protection (VBUS/D+/D-)
+U3,1,AMS1117-3.3,Package_TO_SOT_SMD:SOT-223,C6186,0.06,0.06,>=1A rated 3.3V LDO
+D1,1,BAT54S,Package_TO_SOT_SMD:SOT-23,C8598,0.02,0.02,Dual Schottky clamp on CT_SIG
+D2,1,LED green 0603,LED_SMD:LED_0603_1608Metric,C72043,0.01,0.01,Status LED
+D3,1,LED red 0603,LED_SMD:LED_0603_1608Metric,C2286,0.01,0.01,Alert LED
+"SW1,SW2,SW3",3,Tactile switch SMD 6x6mm,Button_Switch_SMD:SW_SPST_SKQG_WithoutStem,C318884,0.03,0.09,Ack / BOOT / RESET buttons
+J2,1,3.5mm TRS jack (THT),Connector_Audio:Jack_3.5mm_PJ320D_Horizontal,C144396,0.10,0.10,SCT-013-020 CT input; likely hand-solder/THT reflow, not a basic SMT part
+"J3,J4",2,JST-XH 3-pin vertical (THT),Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,C158126,0.05,0.10,DS18B20 chain headers
+J5,1,JST-XH 4-pin vertical (THT),Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical,C158128,0.06,0.06,Drip counter header
+J6,1,JST-SH 4-pin vertical (THT),Connector_JST:JST_SH_BM04B-SRSS-TB_1x04-1MP_P1.00mm_Vertical,C160404,0.06,0.06,I2C/Qwiic expansion header
+J7,1,Pin header 1x3 2.54mm (THT),Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical,C124378,0.02,0.02,UART debug header
+"R4,R5",2,22R 0603,Resistor_SMD:R_0603_1608Metric,C25744,0.002,0.004,USB D+/D- series termination
+"R12,R13",2,330R 0603,Resistor_SMD:R_0603_1608Metric,C22775,0.002,0.004,LED series resistors
+"R8,R11",2,1k 0603,Resistor_SMD:R_0603_1608Metric,C21190,0.002,0.004,CT anti-alias / drip series
+"R9,R14,R15",3,4.7k 0603,Resistor_SMD:R_0603_1608Metric,C23162,0.002,0.006,1-Wire pull-up / I2C pull-ups
+"R2,R3",2,5.1k 0603,Resistor_SMD:R_0603_1608Metric,C25900,0.002,0.004,USB-C CC1/CC2 pulldowns
+"R1,R6,R7,R10",4,10k 0603,Resistor_SMD:R_0603_1608Metric,C25741,0.002,0.008,EN pull-up / CT bias divider / drip pulldown
+"C1,C3,C8,C11,C12",5,100nF 0603,Capacitor_SMD:C_0603_1608Metric,C14663,0.003,0.015,Decoupling / anti-alias / debounce
+C9,1,1uF 0603,Capacitor_SMD:C_0603_1608Metric,C15849,0.01,0.01,CT bias node decoupling
+"C2,C4,C6,C10",4,10uF 0805,Capacitor_SMD:C_0805_2012Metric,C19702,0.02,0.08,Bulk decoupling / AC-coupling
+C7,1,22uF 0805,Capacitor_SMD:C_0805_2012Metric,C45783,0.03,0.03,AMS1117 output cap
+"MH1,MH2",2,M3 mounting hole (NPTH),MountingHole:MountingHole_3.2mm_M3,N/A -- drilled feature not a stocked part,0.00,0.00,No copper at hole per compliance note
+,,,,,,,
+,,,,,COMPONENTS SUBTOTAL,2.73,
+,,,,,Bare PCB fab (2-layer 70x55mm; small-batch estimate),2.00,
+,,,,,JLCPCB SMT assembly service fee (amortized; small-batch estimate),9.00,
+,,,,,ESTIMATED PCBA TOTAL (small batch),13.73,
+,,,,,,,
+,,,,,vs. docs/product-line.md Guard module-based BOM (~$26; includes enclosure/PSU/wiring not this PCB),,
+,,,,,vs. docs/product-line.md $10-15 PCBA target,within target band at small-batch assembly pricing assumed above,,

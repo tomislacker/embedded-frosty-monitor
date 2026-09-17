@@ -53,6 +53,10 @@ No SD card: history lives in a rolling log in internal flash, read out over
 BLE when a tech is on-site. Local LED alert covers short-cycling, no-cold,
 and drip conditions without a network or a phone in the loop.
 
+PCB (experimental): [pcb/guard/README.md](../pcb/guard/README.md) — an
+agent-driven SKiDL/KiCad design-as-code experiment for this tier's board.
+Unreviewed draft, not fab-ready — see that README's honest-status section.
+
 ### Tier 2 — Logger
 
 Guard's BOM plus:
