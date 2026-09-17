@@ -14,7 +14,8 @@ rather than standalone gold-plating, and are cross-referenced as such below.
 The tier build-out sequence itself — validate DAQ Pro → Live pilot → Logger
 → Guard at volume, each tier's thresholds calibrated from the tier above —
 lives in [docs/product-line.md](product-line.md#build-out-sequence) and
-isn't repeated here.
+isn't repeated here. See [docs/compliance.md](compliance.md) for the
+certification roadmap the sold tiers (Guard/Logger/Live) need to clear.
 
 ## 1. Bench-validation items deferred from M0
 

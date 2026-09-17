@@ -84,6 +84,11 @@ is actually confirmed. Beyond that, fill in before sending:
 - **"FrostSight (working name)"** — once the name is finalized, decide
   whether to update the footer tag across all files or keep "working name"
   until a formal rebrand/launch.
+- **Certification/compliance claims** — none of these docs currently claim
+  FCC, UL/NRTL, or NSF status. Before adding any such claim to
+  `service-proposal.html`, `exec-summary.html`, or elsewhere, check the
+  current status against [docs/compliance.md](../docs/compliance.md) —
+  don't imply a listing or approval that hasn't actually been granted yet.
 
 ## Notes on scope
 

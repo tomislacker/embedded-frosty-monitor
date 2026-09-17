@@ -74,3 +74,7 @@ logger. It is not a substitute for the Frosty Factory manufacturer's
 service manual, the machine's own safety documentation, or local
 electrical code. Where they conflict, the manufacturer's documentation and
 code take precedence.
+
+See [docs/compliance.md](compliance.md) for the certification roadmap
+(FCC, UL/NRTL, NEC, NSF, and related) that governs the sold product tiers
+this document's practices support.
